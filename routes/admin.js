@@ -1,4 +1,14 @@
 function registerAdminRoutes(app, { pool, argon2 }) {
+  /**
+   * @swagger
+   * /admin/users:
+   *   get:
+   *     summary: List all users
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Users loaded
+   */
   app.get("/admin/users", async (_req, res) => {
     try {
       const [results] = await pool.query(
@@ -10,6 +20,33 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/users:
+   *   post:
+   *     summary: Create user
+   *     tags: [Admin]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [username, password, full_name, role]
+   *             properties:
+   *               username:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *               full_name:
+   *                 type: string
+   *               role:
+   *                 type: string
+   *                 enum: [admin, chef, customer]
+   *     responses:
+   *       201:
+   *         description: User created
+   */
   app.post("/admin/users", async (req, res) => {
     const { username, password, full_name, role } = req.body;
     if (!username || !password || !full_name || !role) {
@@ -43,6 +80,22 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/users/{id}:
+   *   delete:
+   *     summary: Disable user
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: User disabled
+   */
   app.delete("/admin/users/:id", async (req, res) => {
     try {
       const [result] = await pool.query(
@@ -56,6 +109,31 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/users/{id}/change-password:
+   *   patch:
+   *     summary: Change user password
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               new_password:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Password changed
+   */
   app.patch("/admin/users/:id/change-password", async (req, res) => {
     const { new_password } = req.body;
     if (!new_password) return res.status(400).send("กรุณาระบุ password ใหม่");
@@ -69,6 +147,16 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/tables:
+   *   get:
+   *     summary: List admin table overview
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Tables loaded
+   */
   app.get("/admin/tables", async (_req, res) => {
     try {
       const [results] = await pool.query(
@@ -89,6 +177,29 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/tables:
+   *   post:
+   *     summary: Create table
+   *     tags: [Admin]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               table_id:
+   *                 type: string
+   *               table_name:
+   *                 type: string
+   *               capacity:
+   *                 type: integer
+   *     responses:
+   *       200:
+   *         description: Table created
+   */
   app.post("/admin/tables", async (req, res) => {
     const { table_id, table_name, capacity } = req.body;
     if (!table_id) return res.status(400).send("Table ID required");
@@ -105,6 +216,16 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/sales:
+   *   get:
+   *     summary: List all sales
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Sales loaded
+   */
   app.get("/admin/sales", async (_req, res) => {
     try {
       const [results] = await pool.query("SELECT * FROM sales ORDER BY created_at DESC");
@@ -119,6 +240,16 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/sales/today:
+   *   get:
+   *     summary: List today's sales
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Today's sales loaded
+   */
   app.get("/admin/sales/today", async (_req, res) => {
     try {
       const [results] = await pool.query(
@@ -135,6 +266,22 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/analytics/payment-methods:
+   *   get:
+   *     summary: Payment analytics for admin dashboard
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: query
+   *         name: period
+   *         schema:
+   *           type: string
+   *           enum: [day, week, month]
+   *     responses:
+   *       200:
+   *         description: Analytics loaded
+   */
   app.get("/admin/analytics/payment-methods", async (req, res) => {
     const period = req.query.period || "day";
     let daysAgo = 1;
@@ -161,6 +308,22 @@ function registerAdminRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /admin/sessions/count:
+   *   get:
+   *     summary: Session count summary
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: query
+   *         name: period
+   *         schema:
+   *           type: string
+   *           enum: [day, week, month]
+   *     responses:
+   *       200:
+   *         description: Session count loaded
+   */
   app.get("/admin/sessions/count", async (req, res) => {
     const period = req.query.period || "day";
     let daysAgo = 1;

@@ -7,6 +7,7 @@ const pool = require("./db");
 const { MENU_SELECT, MENU_GROUP, formatMenuItem, parseToppings } = require("./services/menu");
 const { fetchOrdersWithItems } = require("./services/orders");
 const { startAutoMaintenance } = require("./services/maintenance");
+const { setupSwagger } = require("./services/swagger");
 
 const registerTestRoutes = require("./routes/test");
 const registerAuthRoutes = require("./routes/auth");
@@ -21,6 +22,7 @@ const app = express();
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+setupSwagger(app);
 
 const sharedDeps = {
   pool,
