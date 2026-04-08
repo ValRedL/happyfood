@@ -210,7 +210,7 @@ async function submitReview(withReview) {
         const rating = document.querySelector('input[name=rating]:checked')?.value || 3;
         const comment = document.getElementById('review-text').value;
         try {
-            await fetch('/reviews', {
+            const response = await fetch('/reviews', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
@@ -221,9 +221,15 @@ async function submitReview(withReview) {
                     sessionId 
                 })
             });
+            if (!response.ok) {
+                const message = await response.text().catch(() => 'ส่งรีวิวไม่สำเร็จ');
+                throw new Error(message || 'ส่งรีวิวไม่สำเร็จ');
+            }
             console.log("✅ Review submitted");
         } catch(e) { 
-            console.error("Review error:", e); 
+            console.error("Review error:", e);
+            Swal.fire('ส่งรีวิวไม่สำเร็จ', e.message || 'กรุณาลองใหม่อีกครั้ง', 'error');
+            return;
         }
     }
 

@@ -260,6 +260,35 @@ function registerCustomerRoutes(app, deps) {
       conn.release();
     }
   });
+
+  /**
+   * @swagger
+   * /customer/reviews:
+   *   get:
+   *     summary: List customer reviews
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Reviews loaded
+   */
+  app.get("/customer/reviews", async (_req, res) => {
+    try {
+      const [results] = await pool.query(
+        `SELECT id,
+                order_id AS orderId,
+                table_id AS tableId,
+                session_id AS sessionId,
+                rating,
+                comment,
+                created_at AS createdAt
+         FROM reviews
+         ORDER BY created_at DESC`
+      );
+      res.json(results);
+    } catch (err) {
+      res.status(500).send("Database server error");
+    }
+  });
 }
 
 module.exports = registerCustomerRoutes;

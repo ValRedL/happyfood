@@ -202,6 +202,65 @@
 
     <!-- ✅ USERS PAGE -->
     <div id="page-users" class="page-content hidden">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+            <div class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div>
+                        <h3 class="text-xl font-bold text-neutral">🍳 สร้าง Cook ID</h3>
+                        <p class="text-sm text-gray-400 mt-1">สร้างรหัสให้เชฟนำไปสมัครบัญชีได้ทันที</p>
+                    </div>
+                    <button onclick="fillSuggestedCookId()" class="btn btn-sm btn-outline rounded-lg">สุ่มรหัส</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-bold text-gray-600">Cook ID</label>
+                        <div class="flex gap-2 mt-2">
+                            <input id="new-cook-id" type="text" placeholder="เช่น CK-482931" class="input input-bordered w-full rounded-xl uppercase" />
+                            <button onclick="createCookInvite()" class="btn bg-hf-green border-none text-white rounded-xl">สร้าง</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="stat bg-hf-bg rounded-2xl">
+                            <div class="stat-title text-xs">ใช้งานได้</div>
+                            <div id="invite-active-count" class="stat-value text-2xl text-hf-green">0</div>
+                        </div>
+                        <div class="stat bg-hf-bg rounded-2xl">
+                            <div class="stat-title text-xs">ถูกใช้/ปิดแล้ว</div>
+                            <div id="invite-disabled-count" class="stat-value text-2xl text-gray-500">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex justify-between items-center gap-4 mb-5 flex-wrap">
+                    <div>
+                        <h3 class="text-xl font-bold text-neutral">🪪 รายการ Cook ID</h3>
+                        <p class="text-sm text-gray-400 mt-1">คัดลอกส่งให้เชฟ หรือลบสิทธิ์เมื่อไม่ต้องการใช้งานแล้ว</p>
+                    </div>
+                    <button onclick="loadInvites()" class="btn btn-sm btn-outline rounded-lg">รีเฟรช</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-hf-bg border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-bold">Cook ID</th>
+                                <th class="px-4 py-3 text-left font-bold">สถานะ</th>
+                                <th class="px-4 py-3 text-left font-bold">สร้างเมื่อ</th>
+                                <th class="px-4 py-3 text-center font-bold">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invite-list" class="divide-y divide-gray-100">
+                            <!-- render จาก JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 class="text-xl font-bold text-neutral mb-6">👥 ผู้ใช้งาน</h3>
             <div class="overflow-x-auto">
@@ -373,6 +432,7 @@ let allTables = {};
 let allMenus = [];
 let selectedTableId = null;
 let currentPage = 'dashboard';
+let allInvites = [];
 
 // ============================================================
 // PAGE MANAGEMENT
@@ -761,6 +821,7 @@ async function loadUsers() {
         console.log("👥 Loading users...");
         const users = await fetch('/users').then(r => r.json());
         renderUsers(users);
+        await loadInvites();
     } catch (e) {
         console.error("❌ Error loading users:", e);
     }
@@ -809,6 +870,143 @@ async function deleteUser(userId) {
             Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
         }
     });
+}
+
+async function loadInvites() {
+    try {
+        const invites = await fetch('/invite').then(r => r.json());
+        allInvites = Array.isArray(invites) ? invites : [];
+        renderInviteStats(allInvites);
+        renderInvites(allInvites);
+    } catch (e) {
+        console.error("❌ Error loading invites:", e);
+        const tbody = document.getElementById('invite-list');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">โหลด Cook ID ไม่สำเร็จ</td></tr>';
+        }
+    }
+}
+
+function renderInviteStats(invites) {
+    const activeCount = invites.filter(invite => Number(invite.enabled) === 1).length;
+    const disabledCount = invites.length - activeCount;
+
+    document.getElementById('invite-active-count').innerText = activeCount;
+    document.getElementById('invite-disabled-count').innerText = disabledCount;
+}
+
+function renderInvites(invites) {
+    const tbody = document.getElementById('invite-list');
+    tbody.innerHTML = '';
+
+    if (!invites.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">ยังไม่มี Cook ID</td></tr>';
+        return;
+    }
+
+    invites.forEach(invite => {
+        const isEnabled = Number(invite.enabled) === 1;
+        const createdAt = invite.created_at
+            ? new Date(invite.created_at).toLocaleString('th-TH')
+            : '-';
+        const statusBadge = isEnabled
+            ? '<span class="badge badge-success">พร้อมใช้</span>'
+            : '<span class="badge badge-ghost">ถูกใช้แล้ว</span>';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="px-4 py-3 font-bold">${invite.cook_id}</td>
+            <td class="px-4 py-3">${statusBadge}</td>
+            <td class="px-4 py-3 text-sm">${createdAt}</td>
+            <td class="px-4 py-3 text-center">
+                <div class="flex justify-center gap-2 flex-wrap">
+                    <button onclick="copyCookInvite('${invite.cook_id}')" class="btn btn-xs btn-outline rounded-lg">คัดลอก</button>
+                    ${isEnabled
+                        ? `<button onclick="disableCookInvite('${invite.cook_id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">ปิดรหัส</button>`
+                        : '<span class="text-xs text-gray-400 self-center">ปิดแล้ว</span>'}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function generateCookId() {
+    const randomPart = Math.floor(100000 + Math.random() * 900000);
+    return `CK-${randomPart}`;
+}
+
+function fillSuggestedCookId() {
+    const input = document.getElementById('new-cook-id');
+    input.value = generateCookId();
+    input.focus();
+    input.select();
+}
+
+async function createCookInvite() {
+    const input = document.getElementById('new-cook-id');
+    const cookId = String(input.value || '').trim().toUpperCase();
+
+    if (!cookId) {
+        Swal.fire('กรอก Cook ID ก่อน', 'ใส่รหัสที่ต้องการสร้างให้เชฟ', 'warning');
+        return;
+    }
+
+    try {
+        const res = await fetch('/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cook_id: cookId })
+        });
+        const message = await res.text();
+        if (!res.ok) throw new Error(message || 'ไม่สามารถสร้าง Cook ID ได้');
+
+        input.value = '';
+        Swal.fire('สร้างสำเร็จ', `Cook ID: ${cookId}`, 'success');
+        await loadInvites();
+    } catch (e) {
+        Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+    }
+}
+
+async function copyCookInvite(cookId) {
+    try {
+        await navigator.clipboard.writeText(cookId);
+        Swal.fire({
+            icon: 'success',
+            title: 'คัดลอกแล้ว',
+            text: cookId,
+            timer: 1200,
+            showConfirmButton: false
+        });
+    } catch (e) {
+        Swal.fire('คัดลอกไม่สำเร็จ', 'ลองคัดลอกด้วยตนเองอีกครั้ง', 'error');
+    }
+}
+
+async function disableCookInvite(cookId) {
+    const result = await Swal.fire({
+        title: 'ปิด Cook ID นี้?',
+        text: cookId,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'ใช่ ปิดรหัส',
+        cancelButtonText: 'ยกเลิก'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const res = await fetch(`/invite/${encodeURIComponent(cookId)}`, { method: 'DELETE' });
+        const message = await res.text();
+        if (!res.ok) throw new Error(message || 'ไม่สามารถปิดรหัสได้');
+
+        Swal.fire('สำเร็จ', 'ปิด Cook ID แล้ว', 'success');
+        await loadInvites();
+    } catch (e) {
+        Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+    }
 }
 
 // ============================================================
