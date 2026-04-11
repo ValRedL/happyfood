@@ -1,4 +1,14 @@
 function registerChefRoutes(app, { pool, fetchOrdersWithItems }) {
+  /**
+   * @swagger
+   * /chef/orders:
+   *   get:
+   *     summary: List all orders for chef panel
+   *     tags: [Cook]
+   *     responses:
+   *       200:
+   *         description: Orders loaded
+   */
   app.get("/chef/orders", async (_req, res) => {
     try {
       const result = await fetchOrdersWithItems(pool);
@@ -8,6 +18,16 @@ function registerChefRoutes(app, { pool, fetchOrdersWithItems }) {
     }
   });
 
+  /**
+   * @swagger
+   * /chef/orders/active:
+   *   get:
+   *     summary: List active orders for chef panel
+   *     tags: [Cook]
+   *     responses:
+   *       200:
+   *         description: Active orders loaded
+   */
   app.get("/chef/orders/active", async (_req, res) => {
     try {
       const result = await fetchOrdersWithItems(
@@ -20,6 +40,31 @@ function registerChefRoutes(app, { pool, fetchOrdersWithItems }) {
     }
   });
 
+  /**
+   * @swagger
+   * /chef/orders/{id}/status:
+   *   patch:
+   *     summary: Update chef order status
+   *     tags: [Cook]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               status:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Status updated
+   */
   app.patch("/chef/orders/:id/status", async (req, res) => {
     const { status } = req.body;
     try {

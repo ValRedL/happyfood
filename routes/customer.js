@@ -10,6 +10,16 @@ function stripTop(top) {
 function registerCustomerRoutes(app, deps) {
   const { pool, crypto, MENU_SELECT, MENU_GROUP, formatMenuItem, parseToppings } = deps;
 
+  /**
+   * @swagger
+   * /customer/menu:
+   *   get:
+   *     summary: Get customer-facing available menu
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Menu loaded
+   */
   app.get("/customer/menu", async (_req, res) => {
     try {
       const [results] = await pool.query(MENU_SELECT + " AND mi.is_available = TRUE" + MENU_GROUP);
@@ -19,6 +29,22 @@ function registerCustomerRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer/tables/{id}:
+   *   patch:
+   *     summary: Update customer table state
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Table updated
+   */
   app.patch("/customer/tables/:id", async (req, res) => {
     const { status, order_id } = req.body;
     try {
@@ -33,6 +59,16 @@ function registerCustomerRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer/start-session:
+   *   post:
+   *     summary: Start customer session for a table
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Session started
+   */
   app.post("/customer/start-session", async (req, res) => {
     const { table_id } = req.body;
     if (!table_id) return res.status(400).send("Table ID is required");
@@ -59,6 +95,16 @@ function registerCustomerRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer/end-session:
+   *   post:
+   *     summary: End customer session
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Session ended
+   */
   app.post("/customer/end-session", async (req, res) => {
     const { sessionId } = req.body;
     if (!sessionId) return res.status(400).send("Session ID required");
@@ -70,6 +116,16 @@ function registerCustomerRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer/orders:
+   *   post:
+   *     summary: Create customer order
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Order created
+   */
   app.post("/customer/orders", async (req, res) => {
     const { tableId, items, total, sessionId } = req.body;
     if (!tableId || !items || !Array.isArray(items) || items.length === 0 || !total) {
@@ -123,6 +179,22 @@ function registerCustomerRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer/orders/{id}/pay:
+   *   patch:
+   *     summary: Pay customer order
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Payment complete
+   */
   app.patch("/customer/orders/:id/pay", async (req, res) => {
     const { payment_method = "cash" } = req.body;
     const conn = await pool.getConnection();
@@ -146,6 +218,22 @@ function registerCustomerRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer/orders/{id}/cancel:
+   *   post:
+   *     summary: Cancel customer order
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Order cancelled
+   */
   app.post("/customer/orders/:id/cancel", async (req, res) => {
     const conn = await pool.getConnection();
     try {
@@ -170,6 +258,35 @@ function registerCustomerRoutes(app, deps) {
       res.status(500).json({ error: "Database server error" });
     } finally {
       conn.release();
+    }
+  });
+
+  /**
+   * @swagger
+   * /customer/reviews:
+   *   get:
+   *     summary: List customer reviews
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Reviews loaded
+   */
+  app.get("/customer/reviews", async (_req, res) => {
+    try {
+      const [results] = await pool.query(
+        `SELECT id,
+                order_id AS orderId,
+                table_id AS tableId,
+                session_id AS sessionId,
+                rating,
+                comment,
+                created_at AS createdAt
+         FROM reviews
+         ORDER BY created_at DESC`
+      );
+      res.json(results);
+    } catch (err) {
+      res.status(500).send("Database server error");
     }
   });
 }

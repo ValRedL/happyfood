@@ -10,6 +10,16 @@ function stripTop(top) {
 function registerAliasRoutes(app, deps) {
   const { pool, crypto, MENU_SELECT, MENU_GROUP, formatMenuItem, parseToppings, fetchOrdersWithItems } = deps;
 
+  /**
+   * @swagger
+   * /menu/all:
+   *   get:
+   *     summary: List all menu items
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Menu loaded
+   */
   app.get("/menu/all", async (_req, res) => {
     try {
       const [results] = await pool.query(MENU_SELECT + MENU_GROUP);
@@ -20,6 +30,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /tables:
+   *   get:
+   *     summary: List restaurant tables
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Tables loaded
+   */
   app.get("/tables", async (_req, res) => {
     try {
       const [results] = await pool.query(
@@ -36,6 +56,34 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /tables/{id}:
+   *   patch:
+   *     summary: Update table status
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               status:
+   *                 type: string
+   *               order_id:
+   *                 type: string
+   *                 nullable: true
+   *     responses:
+   *       200:
+   *         description: Table updated
+   */
   app.patch("/tables/:id", async (req, res) => {
     const { status, order_id } = req.body;
     try {
@@ -51,6 +99,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /tables:
+   *   post:
+   *     summary: Create table
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Table created
+   */
   app.post("/tables", async (req, res) => {
     const { table_id, table_name, capacity } = req.body;
     if (!table_id) return res.status(400).send("Table ID required");
@@ -67,6 +125,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /menu:
+   *   post:
+   *     summary: Create menu item
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Menu item created
+   */
   app.post("/menu", async (req, res) => {
     const { name, name_th, category, price, toppings, img } = req.body;
     const conn = await pool.getConnection();
@@ -101,6 +169,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /menu/{id}:
+   *   put:
+   *     summary: Update menu item
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Menu updated
+   */
   app.put("/menu/:id", async (req, res) => {
     const { id } = req.params;
     const { name_th, nameTh, name, category, price, toppings, img, available } = req.body;
@@ -147,6 +231,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /menu/{id}:
+   *   delete:
+   *     summary: Soft delete menu item
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Menu deleted
+   */
   app.delete("/menu/:id", async (req, res) => {
     try {
       const [result] = await pool.query("UPDATE menu_items SET is_deleted = TRUE WHERE id = ?", [req.params.id]);
@@ -158,6 +258,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders:
+   *   post:
+   *     summary: Create order
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Order created
+   */
   app.post("/orders", async (req, res) => {
     const { tableId, items, total, sessionId } = req.body;
     if (!tableId || !items || !Array.isArray(items) || items.length === 0 || !total) {
@@ -208,6 +318,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders:
+   *   get:
+   *     summary: List all orders
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Orders loaded
+   */
   app.get("/orders", async (_req, res) => {
     try {
       const result = await fetchOrdersWithItems(pool);
@@ -218,6 +338,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders/active:
+   *   get:
+   *     summary: Get active orders
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Active orders
+   */
   app.get("/orders/active", async (_req, res) => {
     try {
       const result = await fetchOrdersWithItems(pool, "WHERE o.is_paid = FALSE AND o.status NOT IN ('paid','cancelled')");
@@ -228,6 +358,31 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders/{id}/status:
+   *   patch:
+   *     summary: Update order status
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               status:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Status updated
+   */
   app.patch("/orders/:id/status", async (req, res) => {
     const { status } = req.body;
     try {
@@ -240,6 +395,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders/{id}/pay:
+   *   patch:
+   *     summary: Pay order
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Payment complete
+   */
   app.patch("/orders/:id/pay", async (req, res) => {
     const { payment_method = "cash" } = req.body;
     const conn = await pool.getConnection();
@@ -264,6 +435,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders/{id}/cancel:
+   *   post:
+   *     summary: Cancel order
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Order cancelled
+   */
   app.post("/orders/:id/cancel", async (req, res) => {
     const conn = await pool.getConnection();
     try {
@@ -291,6 +478,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /start-session:
+   *   post:
+   *     summary: Start session
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Session started
+   */
   app.post("/start-session", async (req, res) => {
     const { table_id } = req.body;
     if (!table_id) return res.status(400).send("Table ID is required");
@@ -311,6 +508,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /end-session:
+   *   post:
+   *     summary: End session
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Session ended
+   */
   app.post("/end-session", async (req, res) => {
     const { sessionId } = req.body;
     if (!sessionId) return res.status(400).send("Session ID required");
@@ -323,6 +530,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /reviews:
+   *   post:
+   *     summary: Create review
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Review created
+   */
   app.post("/reviews", async (req, res) => {
     const { orderId, tableId, rating, comment, sessionId } = req.body;
     try {
@@ -337,10 +554,26 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /reviews:
+   *   get:
+   *     summary: List reviews
+   *     tags: [Customer]
+   *     responses:
+   *       200:
+   *         description: Reviews loaded
+   */
   app.get("/reviews", async (_req, res) => {
     try {
       const [rows] = await pool.query(
-        `SELECT order_id AS orderId, table_id AS tableId, session_id AS sessionId, rating, comment, created_at AS createdAt
+        `SELECT id,
+                order_id AS orderId,
+                table_id AS tableId,
+                session_id AS sessionId,
+                rating,
+                comment,
+                created_at AS createdAt
          FROM reviews
          ORDER BY created_at DESC, id DESC
          LIMIT 30`
@@ -352,6 +585,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /orders/{id}/receipt:
+   *   get:
+   *     summary: Get order receipt
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Receipt loaded
+   */
   app.get("/orders/:id/receipt", async (req, res) => {
     try {
       const [orders] = await pool.query(
@@ -395,6 +644,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /users:
+   *   get:
+   *     summary: List users
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Users loaded
+   */
   app.get("/users", async (_req, res) => {
     try {
       const [results] = await pool.query(
@@ -406,6 +665,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /users/{id}:
+   *   delete:
+   *     summary: Disable user
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: User disabled
+   */
   app.delete("/users/:id", async (req, res) => {
     try {
       const [result] = await pool.query(
@@ -419,6 +694,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /sales:
+   *   get:
+   *     summary: List sales
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Sales loaded
+   */
   app.get("/sales", async (_req, res) => {
     try {
       const [results] = await pool.query("SELECT * FROM sales ORDER BY created_at DESC");
@@ -433,6 +718,16 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /sales/today:
+   *   get:
+   *     summary: Get today's sales
+   *     tags: [Admin]
+   *     responses:
+   *       200:
+   *         description: Today's sales
+   */
   app.get("/sales/today", async (_req, res) => {
     try {
       const [results] = await pool.query(
@@ -450,6 +745,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /analytics/payment-methods:
+   *   get:
+   *     summary: Get payment method analytics
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: query
+   *         name: period
+   *         schema:
+   *           type: string
+   *           enum: [day, week, month]
+   *     responses:
+   *       200:
+   *         description: Analytics result
+   */
   app.get("/analytics/payment-methods", async (req, res) => {
     const period = req.query.period || "day";
     let daysAgo = 1;
@@ -477,6 +788,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /sessions/count:
+   *   get:
+   *     summary: Get session count
+   *     tags: [Admin]
+   *     parameters:
+   *       - in: query
+   *         name: period
+   *         schema:
+   *           type: string
+   *           enum: [day, week, month]
+   *     responses:
+   *       200:
+   *         description: Session count
+   */
   app.get("/sessions/count", async (req, res) => {
     const period = req.query.period || "day";
     let daysAgo = 1;
@@ -496,6 +823,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer-history:
+   *   get:
+   *     summary: Get customer history by session IDs
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: query
+   *         name: sessionIds
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Customer history
+   */
   app.get("/customer-history", async (req, res) => {
     const sessionIds = req.query.sessionIds;
     if (!sessionIds) return res.json([]);
@@ -586,6 +929,22 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  /**
+   * @swagger
+   * /customer-payments:
+   *   get:
+   *     summary: Get customer payments by session IDs
+   *     tags: [Customer]
+   *     parameters:
+   *       - in: query
+   *         name: sessions
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Customer payments
+   */
   app.get("/customer-payments", async (req, res) => {
     const sessionIds = req.query.sessions?.split(",").filter(Boolean) || [];
     if (!sessionIds.length) return res.json([]);

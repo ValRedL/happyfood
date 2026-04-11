@@ -36,20 +36,26 @@
 <div class="sidebar">
     <div class="p-6 border-b border-gray-100">
         <h1 class="text-2xl font-bold text-neutral">Happy<span class="text-hf-green">Food</span></h1>
-        <p class="text-xs text-gray-400 mt-2">Chef Panel</p>
+        <p class="text-xs text-gray-400 mt-2" data-i18n="chefPanel">Chef Panel</p>
     </div>
 
     <nav class="mt-6">
+        <a href="#dashboard" onclick="showPage('dashboard')" class="menu-item" id="nav-dashboard">
+            <span class="text-lg mr-3">📊</span> <span data-i18n="navDashboard">Dashboard</span>
+        </a>
         <a href="#kds" onclick="showPage('kds')" class="menu-item active" id="nav-kds">
-            <span class="text-lg mr-3">🍳</span> KDS
+            <span class="text-lg mr-3">🍳</span> <span data-i18n="navKds">KDS</span>
         </a>
         <a href="#history" onclick="showPage('history')" class="menu-item" id="nav-history">
-            <span class="text-lg mr-3">📋</span> ประวัติ
+            <span class="text-lg mr-3">📋</span> <span data-i18n="navHistory">ประวัติ</span>
+        </a>
+        <a href="#reviews" onclick="showPage('reviews')" class="menu-item" id="nav-reviews">
+            <span class="text-lg mr-3">⭐</span> <span data-i18n="navReviews">รีวิวลูกค้า</span>
         </a>
     </nav>
 
     <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-100">
-        <button onclick="logout()" class="btn btn-block btn-outline rounded-xl text-sm">ออกจากระบบ</button>
+        <button onclick="logout()" class="btn btn-block btn-outline rounded-xl text-sm" data-i18n="logout">ออกจากระบบ</button>
     </div>
 </div>
 
@@ -61,6 +67,10 @@
             <p id="page-subtitle" class="text-gray-400 mt-1">ระบบแสดงผลในครัว</p>
         </div>
         <div class="flex gap-3 items-center">
+            <div class="join border border-gray-200 rounded-xl overflow-hidden">
+                <button id="lang-th" onclick="setLanguage('th')" class="btn btn-sm join-item border-0 bg-hf-green text-white">TH</button>
+                <button id="lang-en" onclick="setLanguage('en')" class="btn btn-sm join-item border-0 bg-white text-gray-500">EN</button>
+            </div>
             <span id="time" class="text-sm text-gray-500"></span>
             <div class="avatar placeholder">
                 <div class="bg-hf-green text-white rounded-full w-10">
@@ -70,26 +80,93 @@
         </div>
     </div>
 
+    <!-- ✅ DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-gray-400 font-bold uppercase" data-i18n="dashOrdersToday">ออเดอร์วันนี้</p>
+                <p id="dash-total-orders" class="text-4xl font-black text-neutral mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-2" data-i18n="dashOrdersTodayHint">รวมทุกสถานะของวันนี้</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-red-600 font-bold uppercase" data-i18n="dashOpenOrders">คิวค้างตอนนี้</p>
+                <p id="dash-open-orders" class="text-4xl font-black text-red-600 mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-2" data-i18n="dashOpenOrdersHint">pending + cooking + serving</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-yellow-600 font-bold uppercase" data-i18n="dashAvgWait">เวลารอเฉลี่ย</p>
+                <p id="dash-avg-wait" class="text-4xl font-black text-yellow-600 mt-2">0 นาที</p>
+                <p class="text-xs text-gray-400 mt-2" data-i18n="dashAvgWaitHint">เฉพาะออเดอร์ที่ยังไม่ปิดงาน</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-green-600 font-bold uppercase" data-i18n="dashTopItem">เมนูยอดนิยม</p>
+                <p id="dash-top-item" class="text-2xl font-black text-green-700 mt-2">-</p>
+                <p id="dash-top-item-count" class="text-xs text-gray-400 mt-2">ยังไม่มีข้อมูล</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-xl font-bold text-neutral" data-i18n="dashKitchenStatus">สถานะครัววันนี้</h3>
+                    <span class="text-xs text-gray-400" data-i18n="autoRefresh">อัปเดตอัตโนมัติ</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="rounded-2xl bg-red-50 border border-red-100 p-4">
+                        <p class="text-xs font-bold text-red-600 uppercase" data-i18n="statusPending">รอปรุง</p>
+                        <p id="dash-pending" class="text-3xl font-black text-red-700 mt-2">0</p>
+                    </div>
+                    <div class="rounded-2xl bg-yellow-50 border border-yellow-100 p-4">
+                        <p class="text-xs font-bold text-yellow-600 uppercase" data-i18n="statusCooking">กำลังปรุง</p>
+                        <p id="dash-cooking" class="text-3xl font-black text-yellow-700 mt-2">0</p>
+                    </div>
+                    <div class="rounded-2xl bg-green-50 border border-green-100 p-4">
+                        <p class="text-xs font-bold text-green-600 uppercase" data-i18n="statusServing">พร้อมเสิร์ฟ</p>
+                        <p id="dash-serving" class="text-3xl font-black text-green-700 mt-2">0</p>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                        <p class="text-xs font-bold text-slate-500 uppercase" data-i18n="statusClosed">ปิดงานแล้ว</p>
+                        <p id="dash-closed" class="text-3xl font-black text-slate-700 mt-2">0</p>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h4 class="text-lg font-bold text-neutral mb-4" data-i18n="dashTopMenuToday">เมนูที่ถูกสั่งมากที่สุดวันนี้</h4>
+                    <div id="dashboard-top-menu" class="space-y-3">
+                        <p class="text-gray-400 text-sm" data-i18n="noData">ยังไม่มีข้อมูล</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xl font-bold text-neutral mb-5" data-i18n="dashRecentOrders">คิวล่าสุด</h3>
+                <div id="dashboard-recent-orders" class="space-y-3">
+                    <p class="text-gray-400 text-sm" data-i18n="noOrdersYet">ยังไม่มีออเดอร์</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ✅ KDS PAGE -->
     <div id="page-kds" class="page-content">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-red-600 font-bold uppercase">รอปรุง</p>
+                <p class="text-sm text-red-600 font-bold uppercase" data-i18n="statusPending">รอปรุง</p>
                 <p id="stat-pending" class="text-4xl font-black text-red-700 mt-2">0</p>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-yellow-600 font-bold uppercase">กำลังปรุง</p>
+                <p class="text-sm text-yellow-600 font-bold uppercase" data-i18n="statusCooking">กำลังปรุง</p>
                 <p id="stat-cooking" class="text-4xl font-black text-yellow-700 mt-2">0</p>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p class="text-sm text-green-600 font-bold uppercase">พร้อมเสิร์ฟ</p>
+                <p class="text-sm text-green-600 font-bold uppercase" data-i18n="statusServing">พร้อมเสิร์ฟ</p>
                 <p id="stat-ready" class="text-4xl font-black text-green-700 mt-2">0</p>
             </div>
         </div>
 
         <!-- ✅ Pending Orders -->
         <div class="mb-8">
-            <h3 class="text-xl font-bold text-red-600 mb-4">⏳ รอปรุง</h3>
+            <h3 class="text-xl font-bold text-red-600 mb-4">⏳ <span data-i18n="statusPending">รอปรุง</span></h3>
             <div id="pending-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- render จาก JS -->
             </div>
@@ -97,7 +174,7 @@
 
         <!-- ✅ Cooking Orders -->
         <div class="mb-8">
-            <h3 class="text-xl font-bold text-yellow-600 mb-4">🍳 กำลังปรุง</h3>
+            <h3 class="text-xl font-bold text-yellow-600 mb-4">🍳 <span data-i18n="statusCooking">กำลังปรุง</span></h3>
             <div id="cooking-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- render จาก JS -->
             </div>
@@ -105,7 +182,7 @@
 
         <!-- ✅ Ready Orders -->
         <div class="mb-8">
-            <h3 class="text-xl font-bold text-green-600 mb-4">✅ พร้อมเสิร์ฟ</h3>
+            <h3 class="text-xl font-bold text-green-600 mb-4">✅ <span data-i18n="statusServing">พร้อมเสิร์ฟ</span></h3>
             <div id="ready-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- render จาก JS -->
             </div>
@@ -113,7 +190,7 @@
 
         <div id="empty-msg" class="text-center py-20 text-gray-300">
             <p class="text-5xl mb-3">😴</p>
-            <p class="text-lg">ไม่มีออเดอร์</p>
+            <p class="text-lg" data-i18n="noOrders">ไม่มีออเดอร์</p>
         </div>
     </div>
 
@@ -121,10 +198,10 @@
     <div id="page-history" class="page-content hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-                <h3 class="text-xl font-bold text-neutral">📋 ประวัติการทำอาหาร</h3>
+                <h3 class="text-xl font-bold text-neutral">📋 <span data-i18n="historyTitle">ประวัติการทำอาหาร</span></h3>
                 <div class="flex gap-3 items-center flex-wrap">
                     <input type="date" id="filter-date-start" class="input input-bordered rounded-xl" onchange="loadHistory()" />
-                    <span class="text-gray-400">ถึง</span>
+                    <span class="text-gray-400" data-i18n="to">ถึง</span>
                     <input type="date" id="filter-date-end" class="input input-bordered rounded-xl" onchange="loadHistory()" />
                 </div>
             </div>
@@ -132,15 +209,15 @@
             <div class="mb-4">
                 <div class="stats shadow-sm border border-gray-100 rounded-xl w-full">
                     <div class="stat">
-                        <div class="stat-title text-xs">รวมทั้งสิ้น</div>
+                        <div class="stat-title text-xs" data-i18n="historyTotal">รวมทั้งสิ้น</div>
                         <div class="stat-value text-2xl text-hf-green" id="history-total-records">0</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-title text-xs">เสร็จแล้ว</div>
+                        <div class="stat-title text-xs" data-i18n="historyCompleted">เสร็จแล้ว</div>
                         <div class="stat-value text-2xl text-hf-green" id="history-completed">0</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-title text-xs">ยกเลิก</div>
+                        <div class="stat-title text-xs" data-i18n="historyCancelled">ยกเลิก</div>
                         <div class="stat-value text-2xl text-red-600" id="history-cancelled">0</div>
                     </div>
                 </div>
@@ -150,18 +227,62 @@
                 <table class="w-full text-sm">
                     <thead class="bg-hf-bg border-b border-gray-200">
                         <tr>
-                            <th class="px-4 py-3 text-left font-bold">วันที่-เวลา</th>
-                            <th class="px-4 py-3 text-left font-bold">โต๊ะ</th>
-                            <th class="px-4 py-3 text-left font-bold">ออเดอร์</th>
-                            <th class="px-4 py-3 text-left font-bold">รายการ</th>
-                            <th class="px-4 py-3 text-left font-bold">สถานะ</th>
-                            <th class="px-4 py-3 text-center font-bold">ดูรายละเอียด</th>
+                            <th class="px-4 py-3 text-left font-bold" data-i18n="dateTime">วันที่-เวลา</th>
+                            <th class="px-4 py-3 text-left font-bold" data-i18n="table">โต๊ะ</th>
+                            <th class="px-4 py-3 text-left font-bold" data-i18n="order">ออเดอร์</th>
+                            <th class="px-4 py-3 text-left font-bold" data-i18n="items">รายการ</th>
+                            <th class="px-4 py-3 text-left font-bold" data-i18n="status">สถานะ</th>
+                            <th class="px-4 py-3 text-center font-bold" data-i18n="viewDetails">ดูรายละเอียด</th>
                         </tr>
                     </thead>
                     <tbody id="history-list" class="divide-y divide-gray-100">
                         <!-- render จาก JS -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ REVIEWS PAGE -->
+    <div id="page-reviews" class="page-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-gray-400 font-bold uppercase" data-i18n="reviewsTotal">รีวิวทั้งหมด</p>
+                <p id="review-total" class="text-4xl font-black text-neutral mt-2">0</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-yellow-600 font-bold uppercase" data-i18n="reviewsAverage">คะแนนเฉลี่ย</p>
+                <p id="review-average" class="text-4xl font-black text-yellow-600 mt-2">0.0</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-green-600 font-bold uppercase" data-i18n="reviewsPositive">รีวิวดีมาก</p>
+                <p id="review-positive" class="text-4xl font-black text-green-600 mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-2" data-i18n="reviewsPositiveHint">คะแนน 4-5 ดาว</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <p class="text-sm text-red-600 font-bold uppercase" data-i18n="reviewsNegative">ต้องติดตาม</p>
+                <p id="review-negative" class="text-4xl font-black text-red-600 mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-2" data-i18n="reviewsNegativeHint">คะแนน 1-2 ดาว</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+                <h3 class="text-xl font-bold text-neutral" data-i18n="customerVoice">เสียงจากลูกค้า</h3>
+                <div class="flex gap-3 items-center flex-wrap">
+                    <select id="review-filter-rating" class="select select-bordered rounded-xl" onchange="loadReviews()">
+                        <option value="all">ทุกคะแนน</option>
+                        <option value="5">5 ดาว</option>
+                        <option value="4">4 ดาว</option>
+                        <option value="3">3 ดาว</option>
+                        <option value="2">2 ดาว</option>
+                        <option value="1">1 ดาว</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="reviews-list" class="space-y-4">
+                <p class="text-gray-400 text-sm" data-i18n="noReviews">ยังไม่มีรีวิว</p>
             </div>
         </div>
     </div>
@@ -183,8 +304,262 @@
 
 <script>
 let allOrders = [];
+let dashboardOrders = [];
+let allReviews = [];
 let currentPage = 'kds';
 let refreshInterval = null;
+let currentLanguage = localStorage.getItem('hf_chef_lang') || 'th';
+
+const translations = {
+    th: {
+        chefPanel: 'Chef Panel',
+        navDashboard: 'Dashboard',
+        navKds: 'KDS',
+        navHistory: 'ประวัติ',
+        navReviews: 'รีวิวลูกค้า',
+        logout: 'ออกจากระบบ',
+        pageDashboardTitle: 'Chef Dashboard',
+        pageDashboardSubtitle: 'ภาพรวมการทำงานของครัววันนี้',
+        pageKdsTitle: 'Kitchen Display System',
+        pageKdsSubtitle: 'ระบบแสดงผลในครัว',
+        pageHistoryTitle: 'ประวัติการทำอาหาร',
+        pageHistorySubtitle: 'บันทึกการทำอาหาร',
+        pageReviewsTitle: 'Customer Reviews',
+        pageReviewsSubtitle: 'ความคิดเห็นและคะแนนจากลูกค้า',
+        dashOrdersToday: 'ออเดอร์วันนี้',
+        dashOrdersTodayHint: 'รวมทุกสถานะของวันนี้',
+        dashOpenOrders: 'คิวค้างตอนนี้',
+        dashOpenOrdersHint: 'pending + cooking + serving',
+        dashAvgWait: 'เวลารอเฉลี่ย',
+        dashAvgWaitHint: 'เฉพาะออเดอร์ที่ยังไม่ปิดงาน',
+        dashTopItem: 'เมนูยอดนิยม',
+        dashKitchenStatus: 'สถานะครัววันนี้',
+        autoRefresh: 'อัปเดตอัตโนมัติ',
+        statusPending: 'รอปรุง',
+        statusCooking: 'กำลังปรุง',
+        statusServing: 'พร้อมเสิร์ฟ',
+        statusClosed: 'ปิดงานแล้ว',
+        statusPaid: 'ชำระแล้ว',
+        statusCancelled: 'ยกเลิก',
+        statusCompleted: 'เสร็จสิ้น',
+        statusServed: 'เสิร์ฟแล้ว',
+        dashTopMenuToday: 'เมนูที่ถูกสั่งมากที่สุดวันนี้',
+        dashRecentOrders: 'คิวล่าสุด',
+        noData: 'ยังไม่มีข้อมูล',
+        noOrdersYet: 'ยังไม่มีออเดอร์',
+        noOrders: 'ไม่มีออเดอร์',
+        historyTitle: 'ประวัติการทำอาหาร',
+        to: 'ถึง',
+        historyTotal: 'รวมทั้งสิ้น',
+        historyCompleted: 'เสร็จแล้ว',
+        historyCancelled: 'ยกเลิก',
+        dateTime: 'วันที่-เวลา',
+        table: 'โต๊ะ',
+        order: 'ออเดอร์',
+        items: 'รายการ',
+        status: 'สถานะ',
+        viewDetails: 'ดูรายละเอียด',
+        reviewsTotal: 'รีวิวทั้งหมด',
+        reviewsAverage: 'คะแนนเฉลี่ย',
+        reviewsPositive: 'รีวิวดีมาก',
+        reviewsPositiveHint: 'คะแนน 4-5 ดาว',
+        reviewsNegative: 'ต้องติดตาม',
+        reviewsNegativeHint: 'คะแนน 1-2 ดาว',
+        customerVoice: 'เสียงจากลูกค้า',
+        allRatings: 'ทุกคะแนน',
+        starSuffix: 'ดาว',
+        orderLabel: 'ออเดอร์',
+        timeLabel: 'เวลา',
+        itemsLabel: 'รายการ',
+        totalItems: 'รวม {count} รายการ',
+        itemsCount: '{count} รายการ',
+        orderedCount: 'ถูกสั่ง {count} ครั้ง',
+        topMenuHint: 'เมนูยอดนิยมของวันนี้',
+        waitMinutes: '{count} นาที',
+        startCooking: '🔥 เริ่มปรุง',
+        readyToServe: '✅ พร้อมเสิร์ฟ',
+        readyBadge: '✅ พร้อมเสิร์ฟ',
+        cancelOrderTitle: 'ยกเลิกออเดอร์?',
+        cancelOrderText: 'คุณแน่ใจหรือ?',
+        confirmCancel: 'ใช่ ยกเลิก',
+        close: 'ปิด',
+        success: 'สำเร็จ',
+        orderCancelled: 'ยกเลิกออเดอร์แล้ว',
+        error: 'เกิดข้อผิดพลาด',
+        failedLoadReviews: 'โหลดรีวิวไม่สำเร็จ',
+        noReviewsForFilter: 'ยังไม่มีรีวิวในเงื่อนไขนี้',
+        anonymousReview: 'ลูกค้าให้คะแนนโดยไม่ได้เขียนข้อความเพิ่มเติม',
+        invalidOrderId: 'ไม่มี order id'
+    },
+    en: {
+        chefPanel: 'Chef Panel',
+        navDashboard: 'Dashboard',
+        navKds: 'KDS',
+        navHistory: 'History',
+        navReviews: 'Customer Reviews',
+        logout: 'Log Out',
+        pageDashboardTitle: 'Chef Dashboard',
+        pageDashboardSubtitle: 'Kitchen overview for today',
+        pageKdsTitle: 'Kitchen Display System',
+        pageKdsSubtitle: 'Live kitchen order board',
+        pageHistoryTitle: 'Cooking History',
+        pageHistorySubtitle: 'Kitchen activity log',
+        pageReviewsTitle: 'Customer Reviews',
+        pageReviewsSubtitle: 'Ratings and feedback from customers',
+        dashOrdersToday: 'Orders Today',
+        dashOrdersTodayHint: 'All statuses from today',
+        dashOpenOrders: 'Open Queue',
+        dashOpenOrdersHint: 'pending + cooking + serving',
+        dashAvgWait: 'Average Wait',
+        dashAvgWaitHint: 'Only open orders are counted',
+        dashTopItem: 'Top Menu Item',
+        dashKitchenStatus: "Today's Kitchen Status",
+        autoRefresh: 'Auto refresh',
+        statusPending: 'Pending',
+        statusCooking: 'Cooking',
+        statusServing: 'Ready to Serve',
+        statusClosed: 'Closed',
+        statusPaid: 'Paid',
+        statusCancelled: 'Cancelled',
+        statusCompleted: 'Completed',
+        statusServed: 'Served',
+        dashTopMenuToday: 'Most Ordered Items Today',
+        dashRecentOrders: 'Recent Queue',
+        noData: 'No data yet',
+        noOrdersYet: 'No orders yet',
+        noOrders: 'No orders',
+        historyTitle: 'Cooking History',
+        to: 'to',
+        historyTotal: 'Total Records',
+        historyCompleted: 'Completed',
+        historyCancelled: 'Cancelled',
+        dateTime: 'Date & Time',
+        table: 'Table',
+        order: 'Order',
+        items: 'Items',
+        status: 'Status',
+        viewDetails: 'View',
+        reviewsTotal: 'Total Reviews',
+        reviewsAverage: 'Average Rating',
+        reviewsPositive: 'Positive Reviews',
+        reviewsPositiveHint: 'Ratings 4-5 stars',
+        reviewsNegative: 'Needs Follow-up',
+        reviewsNegativeHint: 'Ratings 1-2 stars',
+        customerVoice: 'Customer Feedback',
+        allRatings: 'All ratings',
+        starSuffix: 'stars',
+        orderLabel: 'Order',
+        timeLabel: 'Time',
+        itemsLabel: 'Items',
+        totalItems: '{count} items total',
+        itemsCount: '{count} items',
+        orderedCount: 'Ordered {count} times',
+        topMenuHint: 'Top menu item today',
+        waitMinutes: '{count} min',
+        startCooking: '🔥 Start Cooking',
+        readyToServe: '✅ Ready to Serve',
+        readyBadge: '✅ Ready to Serve',
+        cancelOrderTitle: 'Cancel this order?',
+        cancelOrderText: 'Are you sure?',
+        confirmCancel: 'Yes, cancel it',
+        close: 'Close',
+        success: 'Success',
+        orderCancelled: 'Order cancelled',
+        error: 'Error',
+        failedLoadReviews: 'Failed to load reviews',
+        noReviewsForFilter: 'No reviews match this filter',
+        noReviews: 'No reviews yet',
+        anonymousReview: 'Customer left a rating without additional comments',
+        invalidOrderId: 'No order id'
+    }
+};
+
+function t(key, vars = {}) {
+    const dict = translations[currentLanguage] || translations.th;
+    let text = dict[key] ?? translations.th[key] ?? key;
+    Object.entries(vars).forEach(([name, value]) => {
+        text = text.replaceAll(`{${name}}`, value);
+    });
+    return text;
+}
+
+function getLocale() {
+    return currentLanguage === 'en' ? 'en-US' : 'th-TH';
+}
+
+function formatDateTime(value) {
+    return new Date(value).toLocaleString(getLocale());
+}
+
+function formatTime(value) {
+    return new Date(value).toLocaleTimeString(getLocale());
+}
+
+function tableLabel(tableId) {
+    return `${t('table')} ${tableId}`;
+}
+
+function statusLabel(status) {
+    return {
+        pending: t('statusPending'),
+        cooking: t('statusCooking'),
+        serving: t('statusServing'),
+        paid: t('statusPaid'),
+        cancelled: t('statusCancelled')
+    }[status] || status;
+}
+
+function updateStaticTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+
+    const select = document.getElementById('review-filter-rating');
+    if (select) {
+        select.options[0].text = t('allRatings');
+        for (let i = 1; i < select.options.length; i++) {
+            const value = select.options[i].value;
+            select.options[i].text = `${value} ${t('starSuffix')}`;
+        }
+    }
+}
+
+function updateLanguageButtons() {
+    const thBtn = document.getElementById('lang-th');
+    const enBtn = document.getElementById('lang-en');
+    if (!thBtn || !enBtn) return;
+
+    const isThai = currentLanguage === 'th';
+    thBtn.className = `btn btn-sm join-item border-0 ${isThai ? 'bg-hf-green text-white' : 'bg-white text-gray-500'}`;
+    enBtn.className = `btn btn-sm join-item border-0 ${!isThai ? 'bg-hf-green text-white' : 'bg-white text-gray-500'}`;
+}
+
+function updatePageHeader() {
+    const titles = {
+        dashboard: { title: t('pageDashboardTitle'), subtitle: t('pageDashboardSubtitle') },
+        kds: { title: t('pageKdsTitle'), subtitle: t('pageKdsSubtitle') },
+        history: { title: t('pageHistoryTitle'), subtitle: t('pageHistorySubtitle') },
+        reviews: { title: t('pageReviewsTitle'), subtitle: t('pageReviewsSubtitle') }
+    };
+
+    document.getElementById('page-title').innerText = titles[currentPage].title;
+    document.getElementById('page-subtitle').innerText = titles[currentPage].subtitle;
+}
+
+function setLanguage(lang) {
+    currentLanguage = lang === 'en' ? 'en' : 'th';
+    localStorage.setItem('hf_chef_lang', currentLanguage);
+    document.documentElement.lang = currentLanguage;
+    updateStaticTranslations();
+    updateLanguageButtons();
+    updatePageHeader();
+    updateTime();
+
+    if (currentPage === 'dashboard') renderDashboard();
+    if (currentPage === 'kds') renderOrders();
+    if (currentPage === 'history') loadHistory();
+    if (currentPage === 'reviews') loadReviews();
+}
 
 // ============================================================
 // PAGE MANAGEMENT
@@ -199,15 +574,11 @@ function showPage(page) {
     
     currentPage = page;
     
-    const titles = {
-        kds: { title: 'Kitchen Display System', subtitle: 'ระบบแสดงผลในครัว' },
-        history: { title: 'ประวัติการทำอาหาร', subtitle: 'บันทึกการทำอาหาร' }
-    };
+    updatePageHeader();
     
-    document.getElementById('page-title').innerText = titles[page].title;
-    document.getElementById('page-subtitle').innerText = titles[page].subtitle;
-    
+    if (page === 'dashboard') renderDashboard();
     if (page === 'history') loadHistory();
+    if (page === 'reviews') loadReviews();
 }
 
 // ============================================================
@@ -225,7 +596,11 @@ async function loadOrders() {
 
         allOrders = await response.json();
         console.log(`✅ Got ${allOrders.length} active orders`);
-        
+
+        if (currentPage === 'dashboard') {
+            renderDashboard();
+        }
+
         if (currentPage === 'kds') {
             renderOrders();
             updateStats();
@@ -233,6 +608,107 @@ async function loadOrders() {
     } catch (error) {
         console.error("❌ Error loading orders:", error);
     }
+}
+
+async function renderDashboard() {
+    try {
+        const orders = await fetch('/orders').then(r => r.json());
+        const today = new Date().toISOString().split('T')[0];
+        const todayOrders = orders.filter(o => {
+            const d = new Date(o.createdAt);
+            return !Number.isNaN(d.getTime()) && d.toISOString().split('T')[0] === today;
+        });
+
+        const openOrders = todayOrders.filter(o => !['paid', 'cancelled'].includes(o.status));
+        dashboardOrders = todayOrders;
+        const avgWait = openOrders.length
+            ? Math.round(openOrders.reduce((sum, order) => {
+                return sum + Math.max(0, Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000));
+              }, 0) / openOrders.length)
+            : 0;
+
+        const itemMap = {};
+        todayOrders.forEach(order => {
+            (order.items || []).forEach(item => {
+                const key = item.name || 'ไม่ระบุ';
+                itemMap[key] = (itemMap[key] || 0) + (item.qty || 1);
+            });
+        });
+
+        const rankedItems = Object.entries(itemMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+
+        const topItem = rankedItems[0];
+
+        document.getElementById('dash-total-orders').innerText = todayOrders.length;
+        document.getElementById('dash-open-orders').innerText = openOrders.length;
+        document.getElementById('dash-avg-wait').innerText = t('waitMinutes', { count: avgWait });
+        document.getElementById('dash-top-item').innerText = topItem ? topItem[0] : '-';
+        document.getElementById('dash-top-item-count').innerText = topItem ? t('orderedCount', { count: topItem[1] }) : t('noData');
+
+        document.getElementById('dash-pending').innerText = todayOrders.filter(o => o.status === 'pending').length;
+        document.getElementById('dash-cooking').innerText = todayOrders.filter(o => o.status === 'cooking').length;
+        document.getElementById('dash-serving').innerText = todayOrders.filter(o => o.status === 'serving').length;
+        document.getElementById('dash-closed').innerText = todayOrders.filter(o => ['paid', 'cancelled'].includes(o.status)).length;
+
+        const topMenuEl = document.getElementById('dashboard-top-menu');
+        if (!rankedItems.length) {
+            topMenuEl.innerHTML = `<p class="text-gray-400 text-sm">${t('noData')}</p>`;
+        } else {
+            topMenuEl.innerHTML = rankedItems.map(([name, count], index) => `
+                <div class="flex items-center justify-between rounded-xl bg-hf-bg px-4 py-3">
+                    <div>
+                        <p class="font-bold text-neutral">${index + 1}. ${name}</p>
+                        <p class="text-xs text-gray-400">${t('topMenuHint')}</p>
+                    </div>
+                    <span class="badge badge-outline border-hf-green text-hf-green">${t('itemsCount', { count })}</span>
+                </div>
+            `).join('');
+        }
+
+        const recentEl = document.getElementById('dashboard-recent-orders');
+        const recentOrders = todayOrders
+            .slice()
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 6);
+
+        if (!recentOrders.length) {
+            recentEl.innerHTML = `<p class="text-gray-400 text-sm">${t('noOrdersYet')}</p>`;
+        } else {
+            recentEl.innerHTML = recentOrders.map(order => {
+                return `
+                    <button onclick="showDashboardOrder('${order.id}')" class="w-full text-left rounded-xl border border-gray-100 px-4 py-3 hover:bg-hf-bg transition">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="font-bold text-neutral">${tableLabel(order.tableId)}</p>
+                                <p class="text-xs text-gray-400">${order.id.substring(0, 10)}</p>
+                            </div>
+                            <span class="badge badge-outline">${statusLabel(order.status)}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">${formatDateTime(order.createdAt)}</p>
+                    </button>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error("❌ Error rendering dashboard:", error);
+    }
+}
+
+async function refreshCurrentPage() {
+    if (currentPage === 'reviews') {
+        await loadReviews();
+        return;
+    }
+
+    await loadOrders();
+}
+
+function showDashboardOrder(orderId) {
+    const order = dashboardOrders.find(o => o.id === orderId);
+    if (!order) return;
+    showOrderDetail(order);
 }
 
 function renderOrders() {
@@ -256,7 +732,7 @@ function renderOrderGroup(containerId, orders, status) {
     container.innerHTML = '';
 
     if (orders.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 col-span-full text-center py-8">ไม่มีออเดอร์</p>';
+        container.innerHTML = `<p class="text-gray-400 col-span-full text-center py-8">${t('noOrders')}</p>`;
         return;
     }
 
@@ -271,12 +747,12 @@ function renderOrderGroup(containerId, orders, status) {
         card.innerHTML = `
             <div class="flex justify-between items-start mb-3">
                 <div>
-                    <p class="font-bold text-lg text-neutral">Table ${order.tableId}</p>
-                    <p class="text-xs text-gray-400">Order: ${order.id.substring(0, 8)}</p>
+                    <p class="font-bold text-lg text-neutral">${tableLabel(order.tableId)}</p>
+                    <p class="text-xs text-gray-400">${t('orderLabel')}: ${order.id.substring(0, 8)}</p>
                 </div>
                 <div class="text-right">
-                    <div class="${timeClass} font-bold text-lg">${waitTime} นาที</div>
-                    <p class="text-xs text-gray-500 mt-1">${new Date(order.createdAt).toLocaleTimeString('th-TH')}</p>
+                    <div class="${timeClass} font-bold text-lg">${t('waitMinutes', { count: waitTime })}</div>
+                    <p class="text-xs text-gray-500 mt-1">${formatTime(order.createdAt)}</p>
                 </div>
             </div>
 
@@ -293,14 +769,14 @@ function renderOrderGroup(containerId, orders, status) {
 
             <div class="flex gap-2">
                 ${status === 'pending' ? `
-                    <button onclick="startCooking('${order.id}', event)" class="btn btn-sm bg-hf-green border-none text-white flex-1 rounded-lg font-bold">🔥 เริ่มปรุง</button>
+                    <button onclick="startCooking('${order.id}', event)" class="btn btn-sm bg-hf-green border-none text-white flex-1 rounded-lg font-bold">${t('startCooking')}</button>
                     <button onclick="cancelOrder('${order.id}', event)" class="btn btn-sm btn-outline border-red-500 text-red-500 rounded-lg">❌</button>
                 ` : status === 'cooking' ? `
-                    <button onclick="setOrderStatus('${order.id}', 'pending', event)" class="btn btn-sm btn-outline rounded-lg">↩ รอปรุง</button>
-                    <button onclick="readyServing('${order.id}', event)" class="btn btn-sm bg-hf-green border-none text-white flex-1 rounded-lg font-bold">✅ พร้อมเสิร์ฟ</button>
+                    <button onclick="setOrderStatus('${order.id}', 'pending', event)" class="btn btn-sm btn-outline rounded-lg">↩ ${t('statusPending')}</button>
+                    <button onclick="readyServing('${order.id}', event)" class="btn btn-sm bg-hf-green border-none text-white flex-1 rounded-lg font-bold">${t('readyToServe')}</button>
                 ` : `
-                    <button onclick="setOrderStatus('${order.id}', 'cooking', event)" class="btn btn-sm btn-outline rounded-lg">↩ กำลังปรุง</button>
-                    <span class="badge badge-success">✅ พร้อมเสิร์ฟ</span>
+                    <button onclick="setOrderStatus('${order.id}', 'cooking', event)" class="btn btn-sm btn-outline rounded-lg">↩ ${t('statusCooking')}</button>
+                    <span class="badge badge-success">${t('readyBadge')}</span>
                 `}
             </div>
         `;
@@ -350,13 +826,13 @@ async function cancelOrder(orderId, event) {
     event.stopPropagation();
     
     Swal.fire({
-        title: 'ยกเลิกออเดอร์?',
-        text: 'คุณแน่ใจหรือ?',
+        title: t('cancelOrderTitle'),
+        text: t('cancelOrderText'),
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
-        confirmButtonText: 'ใช่ ยกเลิก',
-        cancelButtonText: 'ปิด'
+        confirmButtonText: t('confirmCancel'),
+        cancelButtonText: t('close')
     }).then(async (result) => {
         if (!result.isConfirmed) return;
 
@@ -371,11 +847,11 @@ async function cancelOrder(orderId, event) {
             if (!res.ok) throw new Error('Failed to cancel');
 
             console.log(`✅ Order ${orderId} cancelled`);
-            Swal.fire('สำเร็จ', 'ยกเลิกออเดอร์แล้ว', 'success');
+            Swal.fire(t('success'), t('orderCancelled'), 'success');
             await loadOrders();
         } catch (e) {
             console.error("❌ Error:", e);
-            Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+            Swal.fire(t('error'), e.message, 'error');
         }
     });
 }
@@ -393,24 +869,24 @@ function showOrderDetail(order) {
         <div class="space-y-3">
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <p class="text-gray-400 text-xs">โต๊ะ</p>
-                    <p class="text-xl font-bold text-hf-green">Table ${order.tableId}</p>
+                    <p class="text-gray-400 text-xs">${t('table')}</p>
+                    <p class="text-xl font-bold text-hf-green">${tableLabel(order.tableId)}</p>
                 </div>
                 <div>
-                    <p class="text-gray-400 text-xs">เวลา</p>
-                    <p class="text-sm text-gray-600">${new Date(order.createdAt).toLocaleTimeString('th-TH')}</p>
+                    <p class="text-gray-400 text-xs">${t('timeLabel')}</p>
+                    <p class="text-sm text-gray-600">${formatTime(order.createdAt)}</p>
                 </div>
             </div>
             
             <div>
-                <p class="text-gray-400 text-xs mb-2">รายการ</p>
+                <p class="text-gray-400 text-xs mb-2">${t('itemsLabel')}</p>
                 <div class="space-y-2">
                     ${itemsHtml}
                 </div>
             </div>
 
             <div class="bg-hf-green/10 p-3 rounded-lg border border-hf-green/30">
-                <p class="text-hf-green font-bold">รวม ${order.items?.length || 0} รายการ</p>
+                <p class="text-hf-green font-bold">${t('totalItems', { count: order.items?.length || 0 })}</p>
             </div>
         </div>
     `;
@@ -457,24 +933,24 @@ function renderHistory(orders) {
 
     orders.forEach(order => {
         const itemCount = order.items?.length || 0;
-        const statusLabel = {
-            'cooking': '🍳 กำลังปรุง',
-            'serving': '🍽️ เสิร์ฟแล้ว',
-            'paid': '✅ เสร็จสิ้น',
-            'cancelled': '❌ ยกเลิก'
+        const historyStatus = {
+            'cooking': `🍳 ${t('statusCooking')}`,
+            'serving': `🍽️ ${t('statusServed')}`,
+            'paid': `✅ ${t('statusCompleted')}`,
+            'cancelled': `❌ ${t('statusCancelled')}`
         }[order.status] || order.status;
 
         const statusColor = order.status === 'cancelled' ? 'badge-error' : 'badge-success';
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm">${new Date(order.createdAt).toLocaleString('th-TH')}</td>
-            <td class="px-4 py-3 font-bold">Table ${order.tableId}</td>
+            <td class="px-4 py-3 text-sm">${formatDateTime(order.createdAt)}</td>
+            <td class="px-4 py-3 font-bold">${tableLabel(order.tableId)}</td>
             <td class="px-4 py-3 text-sm text-gray-600">${order.id.substring(0, 10)}</td>
-            <td class="px-4 py-3 text-center">${itemCount} รายการ</td>
-            <td class="px-4 py-3"><span class="badge ${statusColor}">${statusLabel}</span></td>
+            <td class="px-4 py-3 text-center">${t('itemsCount', { count: itemCount })}</td>
+            <td class="px-4 py-3"><span class="badge ${statusColor}">${historyStatus}</span></td>
             <td class="px-4 py-3 text-center">
-                <button onclick="showOrderDetail({id:'${order.id}', tableId:${order.tableId}, items:${JSON.stringify(order.items || []).replace(/"/g, '&quot;')}, createdAt:'${order.createdAt}'})" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">ดู</button>
+                <button onclick="showOrderDetail({id:'${order.id}', tableId:${order.tableId}, items:${JSON.stringify(order.items || []).replace(/"/g, '&quot;')}, createdAt:'${order.createdAt}'})" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">${t('viewDetails')}</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -492,12 +968,89 @@ function calculateStats(orders) {
 }
 
 // ============================================================
+// REVIEWS
+// ============================================================
+
+function renderStars(rating) {
+    return Array.from({ length: 5 }, (_, i) => i < rating ? '★' : '☆').join('');
+}
+
+async function loadReviews() {
+    try {
+        const response = await fetch('/reviews');
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+        allReviews = await response.json();
+        const filter = document.getElementById('review-filter-rating').value;
+        const filtered = filter === 'all'
+            ? allReviews
+            : allReviews.filter(r => Number(r.rating) === Number(filter));
+
+        renderReviewsSummary(allReviews);
+        renderReviewsList(filtered);
+    } catch (error) {
+        console.error("❌ Error loading reviews:", error);
+        document.getElementById('reviews-list').innerHTML = `<p class="text-red-500 text-sm">${t('failedLoadReviews')}</p>`;
+    }
+}
+
+function renderReviewsSummary(reviews) {
+    const total = reviews.length;
+    const average = total
+        ? (reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / total).toFixed(1)
+        : '0.0';
+    const positive = reviews.filter(r => Number(r.rating) >= 4).length;
+    const negative = reviews.filter(r => Number(r.rating) <= 2).length;
+
+    document.getElementById('review-total').innerText = total;
+    document.getElementById('review-average').innerText = average;
+    document.getElementById('review-positive').innerText = positive;
+    document.getElementById('review-negative').innerText = negative;
+}
+
+function renderReviewsList(reviews) {
+    const container = document.getElementById('reviews-list');
+
+    if (!reviews.length) {
+        container.innerHTML = `<p class="text-gray-400 text-sm">${t('noReviewsForFilter')}</p>`;
+        return;
+    }
+
+    container.innerHTML = reviews.map(review => {
+        const rating = Number(review.rating || 0);
+        const toneClass = rating >= 4
+            ? 'border-green-100 bg-green-50'
+            : rating <= 2
+                ? 'border-red-100 bg-red-50'
+                : 'border-yellow-100 bg-yellow-50';
+
+        return `
+            <div class="rounded-2xl border ${toneClass} p-5">
+                <div class="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <div class="text-xl font-black ${rating >= 4 ? 'text-green-600' : rating <= 2 ? 'text-red-500' : 'text-yellow-600'}">${renderStars(rating)}</div>
+                        <p class="text-sm text-gray-500 mt-1">${tableLabel(review.tableId || '-')}</p>
+                    </div>
+                    <div class="text-right text-xs text-gray-400">
+                        <p>${review.orderId || t('invalidOrderId')}</p>
+                        <p>${formatDateTime(review.createdAt)}</p>
+                    </div>
+                </div>
+                <div class="mt-4 bg-white/80 rounded-xl p-4 border border-white">
+                    <p class="text-sm text-neutral leading-7">${review.comment ? review.comment : t('anonymousReview')}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// ============================================================
 // UTILITIES
 // ============================================================
 
 function updateTime() {
     const now = new Date();
-    document.getElementById('time').innerText = now.toLocaleTimeString('th-TH');
+    document.getElementById('time').innerText = now.toLocaleTimeString(getLocale());
 }
 
 function logout() {
@@ -530,12 +1083,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     console.log("✅ DB loaded");
-    
+
+    document.documentElement.lang = currentLanguage;
+    updateStaticTranslations();
+    updateLanguageButtons();
+    updatePageHeader();
     updateTime();
     setInterval(updateTime, 1000);
 
     await loadOrders();
-    refreshInterval = setInterval(loadOrders, 5000);
+    refreshInterval = setInterval(refreshCurrentPage, 5000);
 });
 
 window.addEventListener('beforeunload', () => {

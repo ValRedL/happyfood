@@ -1,4 +1,28 @@
 function registerAuthRoutes(app, { pool, argon2 }) {
+  /**
+   * @swagger
+   * /login:
+   *   post:
+   *     summary: Login user
+   *     tags: [Cook]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [username, password]
+   *             properties:
+   *               username:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: Login successful
+   *       401:
+   *         description: Invalid credentials
+   */
   app.post("/login", async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -17,6 +41,37 @@ function registerAuthRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /register:
+   *   post:
+   *     summary: Register chef account
+   *     tags: [Cook]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [username, password]
+   *             properties:
+   *               username:
+   *                 type: string
+   *               password:
+   *                 type: string
+   *               full_name:
+   *                 type: string
+   *               cook_id:
+   *                 type: string
+   *                 description: Optional invite code for chef registration
+   *     responses:
+   *       200:
+   *         description: Registration successful
+   *       400:
+   *         description: Invalid payload or cook ID
+   *       409:
+   *         description: Username already exists
+   */
   app.post("/register", async (req, res) => {
     const { username, password, full_name, cook_id } = req.body;
     const resolvedName = full_name || cook_id || username;
@@ -63,6 +118,16 @@ function registerAuthRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /invite:
+   *   get:
+   *     summary: List cook invite codes
+   *     tags: [Cook]
+   *     responses:
+   *       200:
+   *         description: Invite list
+   */
   app.get("/invite", async (_req, res) => {
     try {
       const [rows] = await pool.query(
@@ -75,6 +140,28 @@ function registerAuthRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /invite:
+   *   post:
+   *     summary: Create or enable cook invite code
+   *     tags: [Cook]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [cook_id]
+   *             properties:
+   *               cook_id:
+   *                 type: string
+   *               name:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: Invite created
+   */
   app.post("/invite", async (req, res) => {
     const { cook_id, name } = req.body;
     const inviteId = String(cook_id || "").trim();
@@ -92,6 +179,24 @@ function registerAuthRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /invite/{cook_id}:
+   *   delete:
+   *     summary: Disable cook invite code
+   *     tags: [Cook]
+   *     parameters:
+   *       - in: path
+   *         name: cook_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Invite cancelled
+   *       404:
+   *         description: Invite not found
+   */
   app.delete("/invite/:cook_id", async (req, res) => {
     try {
       const [result] = await pool.query(
@@ -106,6 +211,24 @@ function registerAuthRoutes(app, { pool, argon2 }) {
     }
   });
 
+  /**
+   * @swagger
+   * /invite/verify/{cook_id}:
+   *   get:
+   *     summary: Verify cook invite code
+   *     tags: [Cook]
+   *     parameters:
+   *       - in: path
+   *         name: cook_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Invite is valid
+   *       404:
+   *         description: Invite is invalid
+   */
   app.get("/invite/verify/:cook_id", async (req, res) => {
     try {
       const [rows] = await pool.query(

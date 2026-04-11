@@ -2,8 +2,10 @@
   "name": "food-main",
   "version": "1.0.0",
   "description": "",
-  "main": "app(swagger).js",
+  "main": "app.js",
   "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,6 +15,8 @@
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
     "express": "^5.2.1",
-    "mysql2": "^3.20.0"
+    "mysql2": "^3.20.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   }
 }
