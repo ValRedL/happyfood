@@ -296,8 +296,10 @@ function renderOrderGroup(containerId, orders, status) {
                     <button onclick="startCooking('${order.id}', event)" class="btn btn-sm bg-hf-green border-none text-white flex-1 rounded-lg font-bold">🔥 เริ่มปรุง</button>
                     <button onclick="cancelOrder('${order.id}', event)" class="btn btn-sm btn-outline border-red-500 text-red-500 rounded-lg">❌</button>
                 ` : status === 'cooking' ? `
+                    <button onclick="setOrderStatus('${order.id}', 'pending', event)" class="btn btn-sm btn-outline rounded-lg">↩ รอปรุง</button>
                     <button onclick="readyServing('${order.id}', event)" class="btn btn-sm bg-hf-green border-none text-white flex-1 rounded-lg font-bold">✅ พร้อมเสิร์ฟ</button>
                 ` : `
+                    <button onclick="setOrderStatus('${order.id}', 'cooking', event)" class="btn btn-sm btn-outline rounded-lg">↩ กำลังปรุง</button>
                     <span class="badge badge-success">✅ พร้อมเสิร์ฟ</span>
                 `}
             </div>
@@ -307,6 +309,29 @@ function renderOrderGroup(containerId, orders, status) {
     });
 }
 
+async function setOrderStatus(orderId, status, event) {
+    event?.stopPropagation();
+
+    try {
+        console.log(`🔄 Updating order ${orderId} to ${status}...`);
+        const res = await fetch(`/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+
+        if (!res.ok) {
+            const message = await res.text().catch(() => 'Failed to update order');
+            throw new Error(message || 'Failed to update order');
+        }
+
+        await loadOrders();
+    } catch (e) {
+        console.error("❌ Error:", e);
+        Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+    }
+}
+
 function updateStats() {
     document.getElementById('stat-pending').innerText = allOrders.filter(o => o.status === 'pending').length;
     document.getElementById('stat-cooking').innerText = allOrders.filter(o => o.status === 'cooking').length;
@@ -314,45 +339,11 @@ function updateStats() {
 }
 
 async function startCooking(orderId, event) {
-    event.stopPropagation();
-    
-    try {
-        console.log(`🔥 Starting cooking for order ${orderId}...`);
-        const res = await fetch(`/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'cooking' })
-        });
-
-        if (!res.ok) throw new Error('Failed to update order');
-
-        console.log(`✅ Order ${orderId} now cooking`);
-        await loadOrders();
-    } catch (e) {
-        console.error("❌ Error:", e);
-        Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
-    }
+    await setOrderStatus(orderId, 'cooking', event);
 }
 
 async function readyServing(orderId, event) {
-    event.stopPropagation();
-    
-    try {
-        console.log(`✅ Order ${orderId} ready to serve...`);
-        const res = await fetch(`/orders/${orderId}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'serving' })
-        });
-
-        if (!res.ok) throw new Error('Failed to update order');
-
-        console.log(`✅ Order ${orderId} ready`);
-        await loadOrders();
-    } catch (e) {
-        console.error("❌ Error:", e);
-        Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
-    }
+    await setOrderStatus(orderId, 'serving', event);
 }
 
 async function cancelOrder(orderId, event) {

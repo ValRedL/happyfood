@@ -337,6 +337,21 @@ function registerAliasRoutes(app, deps) {
     }
   });
 
+  app.get("/reviews", async (_req, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT order_id AS orderId, table_id AS tableId, session_id AS sessionId, rating, comment, created_at AS createdAt
+         FROM reviews
+         ORDER BY created_at DESC, id DESC
+         LIMIT 30`
+      );
+      res.json(rows);
+    } catch (err) {
+      console.error("❌ Error loading reviews:", err);
+      res.status(500).send("Database server error");
+    }
+  });
+
   app.get("/orders/:id/receipt", async (req, res) => {
     try {
       const [orders] = await pool.query(

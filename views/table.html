@@ -16,8 +16,8 @@
             }}}
         }
         const t = {
-            th: { title:'เลือกมุมโปรดของคุณ', sub:'กรุณาเลือกโต๊ะที่ต้องการด้านล่าง', vacant:'ว่าง', occupied:'ไม่ว่าง', cleaning:'กำลังทำความสะอาด', selected:'เลือกแล้ว', select:'เลือกโต๊ะนี้', full:'เต็มแล้ว', cleaning_btn:'กำลังจัดโต๊ะ', next:'ดำเนินการต่อ', chef:'แผงควบคุมเชฟ' },
-            en: { title:'Choose Your Spot', sub:'Please select your preferred table below.', vacant:'Available', occupied:'Occupied', cleaning:'Cleaning', selected:'Selected', select:'Select Table', full:'Occupied', cleaning_btn:'Cleaning', next:'Continue', chef:'Chef Panel' },
+            th: { title:'เลือกมุมโปรดของคุณ', sub:'กรุณาเลือกโต๊ะที่ต้องการด้านล่าง', vacant:'ว่าง', occupied:'ไม่ว่าง', cleaning:'กำลังทำความสะอาด', selected:'เลือกแล้ว', select:'เลือกโต๊ะนี้', full:'เต็มแล้ว', cleaning_btn:'กำลังจัดโต๊ะ', next:'ดำเนินการต่อ', chef:'แผงควบคุมเชฟ', reviews:'รีวิว', reviewsTitle:'รีวิวจากลูกค้า', reviewsEmpty:'ยังไม่มีรีวิว', reviewsLoadFail:'โหลดรีวิวไม่สำเร็จ', avgScore:'คะแนนเฉลี่ย', latestReviews:'รีวิวล่าสุด', anonymousReview:'ลูกค้าให้คะแนนโดยไม่ได้เขียนข้อความเพิ่มเติม', table:'โต๊ะ' },
+            en: { title:'Choose Your Spot', sub:'Please select your preferred table below.', vacant:'Available', occupied:'Occupied', cleaning:'Cleaning', selected:'Selected', select:'Select Table', full:'Occupied', cleaning_btn:'Cleaning', next:'Continue', chef:'Chef Panel', reviews:'Reviews', reviewsTitle:'Customer Reviews', reviewsEmpty:'No reviews yet', reviewsLoadFail:'Failed to load reviews', avgScore:'Average Rating', latestReviews:'Latest Reviews', anonymousReview:'Customer left a rating without additional comments', table:'Table' },
         };
         let lang = 'th', selectedId = null;
     </script>
@@ -29,6 +29,12 @@
         .table-card.selected { border-color:#A3B18A; box-shadow:0 12px 24px -6px rgba(163,177,138,.3); }
         .disabled { cursor:not-allowed; opacity:.75; pointer-events: none; }
         .img-dim { filter:grayscale(80%) opacity(.5); }
+        .table-illustration {
+            width: 8rem;
+            height: 8rem;
+            object-fit: contain;
+            transition: all .3s ease;
+        }
         .table-card.pending-selected {
             background: #344E41 !important;
             border-color: #344E41 !important;
@@ -51,6 +57,7 @@
             <button id="btn-th" onclick="setLang('th')" class="btn btn-xs md:btn-sm join-item bg-hf-green-light border-none font-bold">TH</button>
             <button id="btn-en" onclick="setLang('en')" class="btn btn-xs md:btn-sm join-item bg-transparent border-none">EN</button>
         </div>
+        <button id="btn-reviews" onclick="openReviewsModal()" class="btn btn-sm rounded-full bg-hf-green-light border-none text-hf-green-dark font-bold hover:bg-hf-green hover:text-white">⭐ รีวิว</button>
         <div class="tooltip tooltip-bottom" data-tip="แผงควบคุมเชฟ">
             <a href="/login" class="btn btn-ghost btn-circle avatar">
                 <div class="w-9 rounded-full border-2 border-hf-green bg-hf-green-light flex items-center justify-center text-lg">👨‍🍳</div>
@@ -81,27 +88,138 @@
     </button>
 </div>
 
-<script>
-let allMenuItems = [];
-let pendingTableId = null;
-let refreshInterval = null;
+<dialog id="reviews-modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 id="reviews-title" class="text-2xl font-black text-hf-green-dark">รีวิวจากลูกค้า</h3>
+                <p class="text-sm text-gray-400 mt-1"><span id="reviews-average-label">คะแนนเฉลี่ย</span>: <span id="reviews-average-value" class="font-bold text-hf-green">0.0</span></p>
+            </div>
+            <form method="dialog">
+                <button class="btn btn-ghost btn-circle btn-sm text-gray-500 hover:text-red-500">✕</button>
+            </form>
+        </div>
+        <div class="p-6 max-h-[70vh] overflow-y-auto">
+            <div id="reviews-list" class="space-y-4">
+                <p class="text-gray-400 text-sm">ยังไม่มีรีวิว</p>
+            </div>
+        </div>
+    </div>
+</dialog>
 
-async function renderMenu(filter = 'all', q = '') {
-    if (!allMenuItems.length) {
-        try {
-            console.log("📥 Fetching menu from API...");
-            allMenuItems = await DB.getMenu();
-            console.log(`✅ Got ${allMenuItems.length} menu items`);
-        } catch(e) {
-            console.error("❌ Menu fetch error:", e);
-            return;
-        }
-    }
-    const menu = allMenuItems.filter(m => m.available);
+<script>
+let refreshInterval = null;
+let lastTablesSignature = '';
+let publicReviews = [];
+
+async function getTables() {
+    const response = await fetch('/tables');
+    if (!response.ok) throw new Error('Failed to fetch tables');
+    return response.json();
+}
+
+function getTableCardMarkup(id, info) {
+    const isOccupied = info.status === 'occupied';
+    const isCleaning = info.status === 'cleaning';
+    const isDisabled = isOccupied || isCleaning;
+    const isSelected = selectedId === id;
+
+    const statusLabel = isSelected
+        ? t[lang].selected
+        : isOccupied ? t[lang].occupied
+        : isCleaning ? t[lang].cleaning
+        : t[lang].vacant;
+
+    const badgeColor = isSelected
+        ? 'bg-white/20 text-white border border-white/30'
+        : isOccupied ? 'bg-gray-300 text-gray-600'
+        : isCleaning ? 'bg-yellow-100 text-yellow-700'
+        : 'bg-hf-green-light text-hf-green-dark';
+
+    const titleClass = isDisabled && !isSelected
+        ? 'text-gray-300'
+        : isSelected ? 'text-white' : 'text-neutral';
+
+    const buttonHtml = isSelected
+        ? `<button class="btn btn-sm btn-block bg-white/20 text-white border border-white/30 mt-3 rounded-xl backdrop-blur-sm">✓ ${t[lang].selected}</button>`
+        : isOccupied
+        ? `<button class="btn btn-sm btn-block btn-disabled mt-3 rounded-xl" disabled onclick="showOccupiedAlert('${id}')">${t[lang].full}</button>`
+        : isCleaning
+        ? `<button class="btn btn-sm btn-block bg-yellow-100 text-yellow-700 border-none mt-3 rounded-xl cursor-not-allowed" disabled>${t[lang].cleaning_btn}</button>`
+        : `<button onclick="selectTable('${id}', this.closest('.table-card'))" class="btn btn-sm btn-block border-hf-green text-hf-green bg-white hover:bg-hf-green hover:text-white mt-3 rounded-xl transition-colors">${t[lang].select}</button>`;
+
+    return {
+        isDisabled,
+        isSelected,
+        html: `
+            <figure class="px-6 pt-6 relative">
+                <span class="absolute top-8 right-8 badge ${badgeColor} text-[10px] font-bold px-3 py-2">${statusLabel}</span>
+                <img
+                    src="/images/table/table-icon.jpeg"
+                    alt="Table ${id}"
+                    class="table-illustration ${isDisabled && !isSelected ? 'img-dim' : ''}"
+                />
+            </figure>
+            <div class="card-body items-center text-center p-6 pt-3">
+                <h2 class="card-title text-xl font-extrabold ${titleClass}">Table ${id}</h2>
+                ${buttonHtml}
+            </div>`
+    };
+}
+
+function upsertTableCards(tables) {
     const grid = document.getElementById('table-grid');
+    const entries = Object.entries(tables).sort(([a], [b]) => a.localeCompare(b));
+    const seen = new Set();
+
+    entries.forEach(([id, info]) => {
+        seen.add(id);
+        const cardState = getTableCardMarkup(id, info);
+        let card = grid.querySelector(`[data-table-id="${id}"]`);
+
+        if (!card) {
+            card = document.createElement('div');
+            card.dataset.tableId = id;
+            grid.appendChild(card);
+        }
+
+        card.className = `card bg-white shadow-sm table-card ${cardState.isDisabled ? 'disabled' : ''} ${cardState.isSelected ? 'pending-selected' : ''}`;
+        card.onclick = cardState.isDisabled ? null : () => selectTable(id, card);
+        card.innerHTML = cardState.html;
+    });
+
+    Array.from(grid.querySelectorAll('[data-table-id]')).forEach(card => {
+        if (!seen.has(card.dataset.tableId)) {
+            card.remove();
+        }
+    });
+}
+
+async function renderMenu(force = false) {
+    const grid = document.getElementById('table-grid');
+
+    let tables = {};
+    try {
+        tables = await getTables();
+    } catch (e) {
+        console.error("❌ Error fetching tables:", e);
+        return;
+    }
+
+    const signature = JSON.stringify({
+        selectedId,
+        lang,
+        tables: Object.entries(tables).sort(([a], [b]) => a.localeCompare(b))
+    });
+
+    if (!force && signature === lastTablesSignature) {
+        return;
+    }
+    lastTablesSignature = signature;
+
     grid.innerHTML = '';
 
-    if (!menu.length) {
+    if (!Object.keys(tables).length) {
         grid.innerHTML = `
             <div class="col-span-full text-center py-20 text-gray-400">
                 <p class="text-2xl mb-2">🪑</p>
@@ -112,68 +230,14 @@ async function renderMenu(filter = 'all', q = '') {
         return;
     }
 
-    // ✅ ดึง table status จาก API
-    let tables = {};
-    try {
-        tables = await fetch('/tables').then(r => r.json());
-        console.log("✅ Tables fetched from API:", tables);
-    } catch (e) {
-        console.error("❌ Error fetching tables:", e);
-        return;
-    }
-
-    Object.entries(tables).sort().forEach(([id, info]) => {
-        const isOccupied = info.status === 'occupied';
-        const isCleaning = info.status === 'cleaning';
-        const isDisabled = isOccupied || isCleaning;
-        const isSelected = selectedId === id;
-
-        const statusLabel = isSelected
-            ? t[lang].selected
-            : isOccupied ? t[lang].occupied
-            : isCleaning ? t[lang].cleaning
-            : t[lang].vacant;
-
-        const badgeColor = isSelected
-            ? 'bg-white/20 text-white border border-white/30'
-            : isOccupied ? 'bg-gray-300 text-gray-600'
-            : isCleaning ? 'bg-yellow-100 text-yellow-700'
-            : 'bg-hf-green-light text-hf-green-dark';
-
-        const card = document.createElement('div');
-        card.className = `card bg-white shadow-sm table-card ${isDisabled ? 'disabled' : ''} ${isSelected ? 'pending-selected' : ''}`;
-
-        if (!isDisabled) {
-            card.onclick = () => selectTable(id, card);
-        }
-
-        const emojiClass = `card-emoji text-8xl ${isDisabled && !isSelected ? 'img-dim' : ''} transition-all duration-300`;
-
-        card.innerHTML = `
-            <figure class="px-6 pt-6 relative">
-                <span class="absolute top-8 right-8 badge ${badgeColor} text-[10px] font-bold px-3 py-2">${statusLabel}</span>
-                <div class="${emojiClass}">🪑</div>
-            </figure>
-            <div class="card-body items-center text-center p-6 pt-3">
-                <h2 class="card-title text-xl font-extrabold ${isDisabled && !isSelected ? 'text-gray-300' : isSelected ? 'text-white' : 'text-neutral'}">Table ${id}</h2>
-                ${isSelected
-                    ? `<button class="btn btn-sm btn-block bg-white/20 text-white border border-white/30 mt-3 rounded-xl backdrop-blur-sm">✓ ${t[lang].selected}</button>`
-                    : isOccupied
-                    ? `<button class="btn btn-sm btn-block btn-disabled mt-3 rounded-xl" disabled onclick="showOccupiedAlert('${id}')">${t[lang].full}</button>`
-                    : isCleaning
-                    ? `<button class="btn btn-sm btn-block bg-yellow-100 text-yellow-700 border-none mt-3 rounded-xl cursor-not-allowed" disabled>${t[lang].cleaning_btn}</button>`
-                    : `<button onclick="selectTable('${id}', this.closest('.table-card'))" class="btn btn-sm btn-block border-hf-green text-hf-green bg-white hover:bg-hf-green hover:text-white mt-3 rounded-xl transition-colors">${t[lang].select}</button>`
-                }
-            </div>`;
-        grid.appendChild(card);
-    });
+    upsertTableCards(tables);
 }
 
 // ✅ เลือกโต๊ะ + ตรวจสอบว่างหรือไม่
 async function selectTable(id, el) {
     try {
         console.log(`🔍 Checking table ${id} status...`);
-        const tables = await fetch('/tables').then(r => r.json());
+        const tables = await getTables();
         const tableStatus = tables[id];
 
         console.log(`Table ${id} status:`, tableStatus);
@@ -201,7 +265,7 @@ async function selectTable(id, el) {
         // ✅ ถ้าว่าง → เลือกได้ตามปกติ
         console.log(`✅ Table ${id} is available`);
         selectedId = id;
-        await renderMenu();
+        await renderMenu(true);
         document.getElementById('next-bar').classList.remove('hidden');
         document.getElementById('lbl-table').innerText = `(Table ${id})`;
     } catch (e) {
@@ -218,6 +282,57 @@ function showOccupiedAlert(tableId) {
         confirmButtonColor: '#A3B18A',
         confirmButtonText: 'ตกลง'
     });
+}
+
+function renderStars(rating) {
+    const score = Number(rating || 0);
+    return Array.from({ length: 5 }, (_, i) => i < score ? '★' : '☆').join('');
+}
+
+function renderPublicReviews(reviews) {
+    const list = document.getElementById('reviews-list');
+    const avgEl = document.getElementById('reviews-average-value');
+
+    if (!reviews.length) {
+        list.innerHTML = `<p class="text-gray-400 text-sm">${t[lang].reviewsEmpty}</p>`;
+        avgEl.innerText = '0.0';
+        return;
+    }
+
+    const average = (reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length).toFixed(1);
+    avgEl.innerText = average;
+
+    list.innerHTML = reviews.map(review => `
+        <div class="rounded-2xl border border-gray-100 bg-hf-bg p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-lg font-black ${Number(review.rating) >= 4 ? 'text-green-600' : Number(review.rating) <= 2 ? 'text-red-500' : 'text-yellow-600'}">${renderStars(review.rating)}</p>
+                    <p class="text-xs text-gray-500 mt-1">${t[lang].table} ${review.tableId || '-'}</p>
+                </div>
+                <div class="text-right text-xs text-gray-400">
+                    <p>${review.orderId || '-'}</p>
+                    <p>${new Date(review.createdAt).toLocaleString(lang === 'en' ? 'en-US' : 'th-TH')}</p>
+                </div>
+            </div>
+            <div class="mt-3 rounded-xl bg-white p-4 border border-gray-100">
+                <p class="text-sm text-neutral leading-7">${review.comment ? review.comment : t[lang].anonymousReview}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function openReviewsModal() {
+    document.getElementById('reviews-title').innerText = t[lang].reviewsTitle;
+    document.getElementById('reviews-average-label').innerText = t[lang].avgScore;
+    document.getElementById('reviews-list').innerHTML = `<p class="text-gray-400 text-sm">${t[lang].latestReviews}...</p>`;
+    document.getElementById('reviews-modal').showModal();
+
+    try {
+        publicReviews = await DB.getReviews();
+        renderPublicReviews(publicReviews);
+    } catch (e) {
+        document.getElementById('reviews-list').innerHTML = `<p class="text-red-500 text-sm">${t[lang].reviewsLoadFail}</p>`;
+    }
 }
 
 // ✅ LOCK TABLE ทันที + สร้าง SESSION + ไปเมนู
@@ -310,17 +425,11 @@ async function initPage() {
     localStorage.removeItem('activeSessionId');
     selectedId = null;
 
-    try {
-        const tables = await fetch('/tables').then(r => r.json());
-        console.log("✅ Tables data loaded");
-    } catch(e) { console.error("❌ Error loading tables:", e); }
-
     console.log("✅ Page initialized, rendering tables...");
-    await renderMenu();
+    await renderMenu(true);
 
     // ✅ AUTO-REFRESH ทุก 3 วินาที เพื่อดึงสถานะโต๊ะที่อัปเดต
     refreshInterval = setInterval(async () => {
-        console.log("🔄 Auto-refreshing table status...");
         await renderMenu();
     }, 3000);
 }
@@ -335,7 +444,13 @@ function setLang(l) {
     document.getElementById('txt-next').innerText = t[l].next;
     document.getElementById('btn-th').className = `btn btn-xs md:btn-sm join-item border-none font-bold ${l==='th'?'bg-hf-green-light':'bg-transparent'}`;
     document.getElementById('btn-en').className = `btn btn-xs md:btn-sm join-item border-none font-bold ${l==='en'?'bg-hf-green-light':'bg-transparent'}`;
-    renderMenu();
+    document.getElementById('btn-reviews').innerText = `⭐ ${t[l].reviews}`;
+    if (document.getElementById('reviews-modal').open) {
+        document.getElementById('reviews-title').innerText = t[l].reviewsTitle;
+        document.getElementById('reviews-average-label').innerText = t[l].avgScore;
+        renderPublicReviews(publicReviews);
+    }
+    renderMenu(true);
 }
 
 // ✅ ยกเลิก refresh เมื่อออกจากหน้า

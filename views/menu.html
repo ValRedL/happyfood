@@ -23,7 +23,10 @@
                   specialPH:'เช่น ไม่เผ็ด, ไม่ใส่ผัก, ขอไข่ดาวกรอบๆ...', addCart:'เพิ่มลงตะกร้า',
                   emptyCart:'ตะกร้าว่างเปล่า', orderOk:'สั่งอาหารสำเร็จ!', orderOkSub:'เชฟได้รับออเดอร์แล้ว',
                   ok:'ตกลง', cancel:'ยกเลิก', noteLabel:'หมายเหตุ: ', qty:'จำนวน', remove:'ลบ',
-                  noMenu:'ไม่พบเมนูที่ค้นหา', spicy:'ระดับความเผ็ด', unavail:'หมดชั่วคราว' },
+                  noMenu:'ไม่พบเมนูที่ค้นหา', spicy:'ระดับความเผ็ด', unavail:'หมดชั่วคราว',
+                  reviews:'รีวิว', reviewsTitle:'รีวิวจากลูกค้า', reviewsEmpty:'ยังไม่มีรีวิว',
+                  reviewsLoadFail:'โหลดรีวิวไม่สำเร็จ', avgScore:'คะแนนเฉลี่ย', latestReviews:'รีวิวล่าสุด',
+                  anonymousReview:'ลูกค้าให้คะแนนโดยไม่ได้เขียนข้อความเพิ่มเติม', table:'โต๊ะ' },
             en: { search:'Search menu...', all:'All', noodle:'Noodles', rice:'Main Course',
                   drink:'Drinks', dessert:'Desserts', cart:'Your Cart', order:'Place Order',
                   pay:'Checkout', addMore:'Add More', total:'Total',
@@ -32,9 +35,12 @@
                   specialPH:'e.g. No spicy, No veggies, Crispy egg...', addCart:'Add to Cart',
                   emptyCart:'Cart is empty', orderOk:'Order Placed!', orderOkSub:'Chef received your order.',
                   ok:'OK', cancel:'Cancel', noteLabel:'Note: ', qty:'Qty', remove:'Remove',
-                  noMenu:'No menu found', spicy:'Spice level', unavail:'Unavailable' },
+                  noMenu:'No menu found', spicy:'Spice level', unavail:'Unavailable',
+                  reviews:'Reviews', reviewsTitle:'Customer Reviews', reviewsEmpty:'No reviews yet',
+                  reviewsLoadFail:'Failed to load reviews', avgScore:'Average Rating', latestReviews:'Latest Reviews',
+                  anonymousReview:'Customer left a rating without additional comments', table:'Table' },
         };
-        let lang = 'th', cart = [], tempItem = null, currentCat = 'all', ordered = false;
+        let lang = 'th', cart = [], tempItem = null, currentCat = 'all', ordered = false, publicReviews = [];
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap');
@@ -104,6 +110,10 @@
                 <a href="/order-history" class="btn btn-ghost btn-circle btn-sm text-hf-green hover:bg-hf-green-light">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                 </a>
+
+                <button onclick="openReviewsModal()" class="btn btn-ghost btn-circle btn-sm text-hf-green hover:bg-hf-green-light" title="Reviews">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.02 3.138a1 1 0 00.95.69h3.3c.969 0 1.371 1.24.588 1.81l-2.67 1.94a1 1 0 00-.364 1.118l1.02 3.138c.3.922-.755 1.688-1.54 1.118l-2.67-1.94a1 1 0 00-1.176 0l-2.67 1.94c-.784.57-1.838-.196-1.539-1.118l1.02-3.138a1 1 0 00-.364-1.118l-2.67-1.94c-.783-.57-.38-1.81.588-1.81h3.3a1 1 0 00.95-.69l1.02-3.138z"/></svg>
+                </button>
 
                 <!-- Cart -->
                 <label for="cart-drawer" class="btn btn-ghost btn-circle btn-sm cursor-pointer relative">
@@ -180,7 +190,10 @@
 <dialog id="item-modal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box bg-white rounded-t-3xl sm:rounded-3xl p-0 overflow-hidden max-w-md">
         <div id="modal-header" class="bg-gradient-to-br from-hf-green-light via-white to-hf-bg p-8 text-center">
-            <div id="modal-emoji" class="text-8xl mb-4">🍛</div>
+            <div id="modal-media" class="mb-4 flex justify-center">
+                <div id="modal-emoji" class="text-8xl">🍛</div>
+                <img id="modal-image" src="" alt="" class="hidden h-32 w-32 rounded-3xl object-cover shadow-md border border-white/70" />
+            </div>
             <h3 id="modal-name" class="font-black text-2xl text-hf-green-dark"></h3>
             <p id="modal-price" class="text-hf-green font-bold text-2xl mt-2"></p>
         </div>
@@ -209,8 +222,35 @@
     </div>
 </dialog>
 
+<dialog id="reviews-modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 id="reviews-title" class="text-2xl font-black text-hf-green-dark">รีวิวจากลูกค้า</h3>
+                <p class="text-sm text-gray-400 mt-1"><span id="reviews-average-label">คะแนนเฉลี่ย</span>: <span id="reviews-average-value" class="font-bold text-hf-green">0.0</span></p>
+            </div>
+            <form method="dialog">
+                <button class="btn btn-ghost btn-circle btn-sm text-gray-500 hover:text-red-500">✕</button>
+            </form>
+        </div>
+        <div class="p-6 max-h-[70vh] overflow-y-auto">
+            <div id="reviews-list" class="space-y-4">
+                <p class="text-gray-400 text-sm">ยังไม่มีรีวิว</p>
+            </div>
+        </div>
+    </div>
+</dialog>
+
 <script>
 let allMenuItems = [];
+
+function getMenuVisual(item, sizeClass = 'h-24 w-24') {
+    if (item.image_url) {
+        const safeAlt = (item.name_th || item.name || 'menu item').replace(/"/g, '&quot;');
+        return `<img src="${item.image_url}" alt="${safeAlt}" class="${sizeClass} mx-auto rounded-3xl object-cover shadow-sm border border-gray-100" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><div class="text-7xl" style="display:none;">${item.img}</div>`;
+    }
+    return `<div class="text-7xl">${item.img}</div>`;
+}
 
 async function renderMenu(filter = 'all', q = '') {
     if (!allMenuItems.length) {
@@ -243,7 +283,7 @@ async function renderMenu(filter = 'all', q = '') {
         card.onclick = () => openItemModal(item);
         card.innerHTML = `
             <div class="p-4 text-center space-y-3">
-                <div class="text-7xl">${item.img}</div>
+                <div>${getMenuVisual(item)}</div>
                 <div>
                     <h2 class="font-bold text-sm text-neutral leading-tight">${item.name_th || item.name}</h2>
                     <p class="text-hf-green font-black text-lg mt-1">฿${item.price}</p>
@@ -259,7 +299,23 @@ async function renderMenu(filter = 'all', q = '') {
 function openItemModal(item) {
     if (ordered) return;
     tempItem = { ...item, selectedToppings: [], qty: 1 };
-    document.getElementById('modal-emoji').innerText = item.img;
+    const modalEmoji = document.getElementById('modal-emoji');
+    const modalImage = document.getElementById('modal-image');
+    modalEmoji.innerText = item.img;
+    if (item.image_url) {
+        modalImage.src = item.image_url;
+        modalImage.alt = item.name_th || item.name || 'menu item';
+        modalImage.classList.remove('hidden');
+        modalEmoji.classList.add('hidden');
+        modalImage.onerror = () => {
+            modalImage.classList.add('hidden');
+            modalEmoji.classList.remove('hidden');
+        };
+    } else {
+        modalImage.classList.add('hidden');
+        modalImage.src = '';
+        modalEmoji.classList.remove('hidden');
+    }
     document.getElementById('modal-name').innerText = item.name_th || item.name;
     document.getElementById('modal-price').innerText = `฿${item.price}`;
     document.getElementById('modal-qty').innerText = 1;
@@ -304,6 +360,7 @@ function addToCart() {
     const totalPrice = (tempItem.price + extra) * tempItem.qty;
     cart.push({
         menuId: tempItem.id, name: tempItem.name_th || tempItem.name, img: tempItem.img,
+        image_url: tempItem.image_url || null,
         qty: tempItem.qty, price: tempItem.price,
         toppings: tempItem.selectedToppings,
         note: document.getElementById('modal-note').value,
@@ -333,7 +390,11 @@ function updateCartUI() {
     } else {
         container.innerHTML = cart.map((item,i) => `
             <div class="flex gap-3 p-3 bg-hf-bg rounded-xl items-start border border-gray-100">
-                <span class="text-2xl shrink-0">${item.img}</span>
+                <div class="shrink-0 w-12 h-12 flex items-center justify-center overflow-hidden rounded-2xl bg-white border border-gray-100">
+                    ${item.image_url
+                        ? `<img src="${item.image_url}" alt="${(item.name || 'menu item').replace(/"/g, '&quot;')}" class="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><span class="text-2xl" style="display:none;">${item.img}</span>`
+                        : `<span class="text-2xl">${item.img}</span>`}
+                </div>
                 <div class="flex-1 min-w-0">
                     <p class="font-bold text-sm text-neutral truncate">${item.name} <span class="text-gray-400 font-normal text-xs">×${item.qty}</span></p>
                     ${item.toppings.length ? `<p class="text-[11px] text-gray-500 truncate mt-1">${item.toppings.join(', ')}</p>` : ''}
@@ -414,6 +475,58 @@ function goCheckout() {
     window.location.href = '/checkout';
 }
 
+function renderStars(rating) {
+    const score = Number(rating || 0);
+    return Array.from({ length: 5 }, (_, i) => i < score ? '★' : '☆').join('');
+}
+
+function renderPublicReviews(reviews) {
+    const list = document.getElementById('reviews-list');
+    const avgEl = document.getElementById('reviews-average-value');
+
+    if (!reviews.length) {
+        list.innerHTML = `<p class="text-gray-400 text-sm">${tl[lang].reviewsEmpty}</p>`;
+        avgEl.innerText = '0.0';
+        return;
+    }
+
+    const average = (reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length).toFixed(1);
+    avgEl.innerText = average;
+
+    list.innerHTML = reviews.map(review => `
+        <div class="rounded-2xl border border-gray-100 bg-hf-bg p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-lg font-black ${Number(review.rating) >= 4 ? 'text-green-600' : Number(review.rating) <= 2 ? 'text-red-500' : 'text-yellow-600'}">${renderStars(review.rating)}</p>
+                    <p class="text-xs text-gray-500 mt-1">${tl[lang].table} ${review.tableId || '-'}</p>
+                </div>
+                <div class="text-right text-xs text-gray-400">
+                    <p>${review.orderId || '-'}</p>
+                    <p>${new Date(review.createdAt).toLocaleString(lang === 'en' ? 'en-US' : 'th-TH')}</p>
+                </div>
+            </div>
+            <div class="mt-3 rounded-xl bg-white p-4 border border-gray-100">
+                <p class="text-sm text-neutral leading-7">${review.comment ? review.comment : tl[lang].anonymousReview}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function openReviewsModal() {
+    const modal = document.getElementById('reviews-modal');
+    document.getElementById('reviews-title').innerText = tl[lang].reviewsTitle;
+    document.getElementById('reviews-average-label').innerText = tl[lang].avgScore;
+    document.getElementById('reviews-list').innerHTML = `<p class="text-gray-400 text-sm">${tl[lang].latestReviews}...</p>`;
+    modal.showModal();
+
+    try {
+        publicReviews = await DB.getReviews();
+        renderPublicReviews(publicReviews);
+    } catch (e) {
+        document.getElementById('reviews-list').innerHTML = `<p class="text-red-500 text-sm">${tl[lang].reviewsLoadFail}</p>`;
+    }
+}
+
 // ✅ Filter with dropdown
 function filterMenuDropdown(cat, label) {
     currentCat = cat;
@@ -436,6 +549,11 @@ function setLang(l) {
     lang = l;
     document.getElementById('btn-th').className = `btn btn-xs join-item border-none font-bold ${l==='th'?'bg-hf-green-light text-hf-green-dark':'bg-transparent text-gray-500 hover:text-hf-green'}`;
     document.getElementById('btn-en').className = `btn btn-xs join-item border-none font-bold ${l==='en'?'bg-hf-green-light text-hf-green-dark':'bg-transparent text-gray-500 hover:text-hf-green'}`;
+    if (document.getElementById('reviews-modal').open) {
+        document.getElementById('reviews-title').innerText = tl[lang].reviewsTitle;
+        document.getElementById('reviews-average-label').innerText = tl[lang].avgScore;
+        renderPublicReviews(publicReviews);
+    }
 }
 
 async function cancelOrder() {

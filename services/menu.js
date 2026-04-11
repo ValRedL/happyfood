@@ -6,6 +6,7 @@ function formatMenuItem(m) {
     category: m.category_code,
     price: parseFloat(m.price),
     img: m.emoji || "🍽️",
+    image_url: m.image_url || null,
     available: m.is_available ? 1 : 0,
     toppings: m.toppings || [],
   };
@@ -13,7 +14,7 @@ function formatMenuItem(m) {
 
 const MENU_SELECT = `
   SELECT
-    mi.id, mi.name_th, mi.name_en, mi.price, mi.emoji, mi.is_available,
+    mi.id, mi.name_th, mi.name_en, mi.price, mi.emoji, mi.image_url, mi.is_available,
     mc.code AS category_code,
     GROUP_CONCAT(
       IF(mt.id IS NULL, NULL,
