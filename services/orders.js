@@ -59,6 +59,7 @@ async function fetchOrdersWithItems(pool, whereClause = "") {
     total: parseFloat(o.total),
     status: o.status,
     paid: o.is_paid ? 1 : 0,
+    paymentMethod: o.payment_method || null,
     createdAt: o.created_at,
     paidAt: o.paid_at,
   }));
