@@ -15,7 +15,7 @@
             }}}
         }
         const tl = {
-            th: { search:'ค้นหาเมนูอาหาร...', all:'ทั้งหมด', noodle:'อาหารเส้น', rice:'จานเดียว',
+            th: { pageTitle:'เมนูอาหาร - Happy Food', backTitle:'กลับไปเลือกโต๊ะ', search:'ค้นหาเมนูอาหาร...', searchShort:'ค้นหา...', all:'ทั้งหมด', noodle:'อาหารเส้น', rice:'จานเดียว',
                   drink:'เครื่องดื่ม', dessert:'ของหวาน', cart:'ตะกร้าของคุณ', order:'สั่งอาหาร',
                   pay:'ไปชำระเงิน', addMore:'เลือกอาหารเพิ่ม', total:'ยอดรวม',
                   confirmPay:'ยืนยันการชำระเงิน?', confirmPaySub:'เมื่อชำระเงินแล้วจะไม่สามารถเลือกอาหารเพิ่มได้',
@@ -24,10 +24,17 @@
                   emptyCart:'ตะกร้าว่างเปล่า', orderOk:'สั่งอาหารสำเร็จ!', orderOkSub:'เชฟได้รับออเดอร์แล้ว',
                   ok:'ตกลง', cancel:'ยกเลิก', noteLabel:'หมายเหตุ: ', qty:'จำนวน', remove:'ลบ',
                   noMenu:'ไม่พบเมนูที่ค้นหา', spicy:'ระดับความเผ็ด', unavail:'หมดชั่วคราว',
+                  menuLoadFail:'ไม่สามารถโหลดเมนู', statusBar:'สถานะออเดอร์', ordered:'สั่งแล้ว',
+                  cooking:'กำลังปรุง', serving:'เสิร์ฟแล้ว', paidBanner:'ชำระเงินเรียบร้อยแล้ว - ไม่สามารถสั่งอาหารเพิ่มได้',
+                  noExtraOptions:'ไม่มีตัวเลือกเพิ่ม', reviewsBtnTitle:'ดูรีวิว', historyBtnTitle:'ประวัติออเดอร์',
+                  leaveTableTitle:'ออกจากโต๊ะ?', leaveTableText:'คุณแน่ใจหรือ? ออเดอร์ที่ยังไม่ชำระจะถูกยกเลิก',
+                  leaveTableConfirm:'ใช่ ออกจากโต๊ะ', orderCancelTitle:'ยกเลิกออเดอร์?', orderCancelText:'ออเดอร์จะถูกยกเลิกและไม่สามารถกู้คืนได้',
+                  orderCancelConfirm:'ยกเลิกออเดอร์', close:'ปิด', orderCancelFail:'ไม่สามารถยกเลิกออเดอร์ได้',
+                  orderCancelled:'ยกเลิกแล้ว', orderCancelledSub:'ออเดอร์ถูกยกเลิกสำเร็จ', systemConnectFail:'ไม่สามารถเชื่อมต่อระบบได้',
                   reviews:'รีวิว', reviewsTitle:'รีวิวจากลูกค้า', reviewsEmpty:'ยังไม่มีรีวิว',
                   reviewsLoadFail:'โหลดรีวิวไม่สำเร็จ', avgScore:'คะแนนเฉลี่ย', latestReviews:'รีวิวล่าสุด',
                   anonymousReview:'ลูกค้าให้คะแนนโดยไม่ได้เขียนข้อความเพิ่มเติม', table:'โต๊ะ' },
-            en: { search:'Search menu...', all:'All', noodle:'Noodles', rice:'Main Course',
+            en: { pageTitle:'Menu - Happy Food', backTitle:'Back to table selection', search:'Search menu...', searchShort:'Search...', all:'All', noodle:'Noodles', rice:'Main Course',
                   drink:'Drinks', dessert:'Desserts', cart:'Your Cart', order:'Place Order',
                   pay:'Checkout', addMore:'Add More', total:'Total',
                   confirmPay:'Confirm Payment?', confirmPaySub:'Once paid, you cannot add more items.',
@@ -36,11 +43,18 @@
                   emptyCart:'Cart is empty', orderOk:'Order Placed!', orderOkSub:'Chef received your order.',
                   ok:'OK', cancel:'Cancel', noteLabel:'Note: ', qty:'Qty', remove:'Remove',
                   noMenu:'No menu found', spicy:'Spice level', unavail:'Unavailable',
+                  menuLoadFail:'Unable to load menu', statusBar:'Order Status', ordered:'Ordered',
+                  cooking:'Cooking', serving:'Served', paidBanner:'Payment completed - you cannot add more items',
+                  noExtraOptions:'No extra options', reviewsBtnTitle:'View reviews', historyBtnTitle:'Order history',
+                  leaveTableTitle:'Leave this table?', leaveTableText:'Are you sure? Any unpaid order will be cancelled.',
+                  leaveTableConfirm:'Yes, leave table', orderCancelTitle:'Cancel this order?', orderCancelText:'This order will be cancelled and cannot be restored.',
+                  orderCancelConfirm:'Cancel Order', close:'Close', orderCancelFail:'Unable to cancel order',
+                  orderCancelled:'Cancelled', orderCancelledSub:'Your order has been cancelled successfully', systemConnectFail:'Unable to connect to the system',
                   reviews:'Reviews', reviewsTitle:'Customer Reviews', reviewsEmpty:'No reviews yet',
                   reviewsLoadFail:'Failed to load reviews', avgScore:'Average Rating', latestReviews:'Latest Reviews',
                   anonymousReview:'Customer left a rating without additional comments', table:'Table' },
         };
-        let lang = 'th', cart = [], tempItem = null, currentCat = 'all', ordered = false, publicReviews = [];
+        let lang = localStorage.getItem('customerLang') || 'th', cart = [], tempItem = null, currentCat = 'all', ordered = false, publicReviews = [];
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap');
@@ -49,7 +63,28 @@
         .menu-card { transition:all .25s ease; cursor:pointer; border-radius: 20px; }
         .menu-card:hover { transform:translateY(-4px); box-shadow:0 12px 24px -6px rgba(0,0,0,.1); }
         .swal2-popup { border-radius:24px !important; font-family:'Noto Sans Thai',sans-serif !important; }
-        .swal2-confirm { background-color:#A3B18A !important; border-radius:12px !important; }
+        .swal2-confirm { background-color:#A3B18A !important; border-radius:12px !important; box-shadow:none !important; }
+        .swal2-cancel {
+            background:#667085 !important;
+            color:#fff !important;
+            border:1px solid #667085 !important;
+            border-radius:12px !important;
+            box-shadow:none !important;
+        }
+        .swal2-cancel:hover {
+            background:#475467 !important;
+            border-color:#475467 !important;
+        }
+        .icon-btn-muted {
+            color:#4b5563 !important;
+            background:#f3f4f6 !important;
+            border:1px solid #e5e7eb !important;
+        }
+        .icon-btn-muted:hover {
+            color:#dc2626 !important;
+            background:#fee2e2 !important;
+            border-color:#fecaca !important;
+        }
         .cart-badge-anim { animation: cart-pop .3s cubic-bezier(.36,.07,.19,.97); }
         @keyframes cart-pop { 0%{transform:scale(1)} 50%{transform:scale(1.5)} 100%{transform:scale(1)} }
         .drawer-side { z-index:60; }
@@ -66,7 +101,7 @@
         <nav class="navbar bg-white/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-12 border-b border-gray-100 shadow-sm">
             <div class="flex-1 flex items-center gap-3">
                 <!-- Back Button -->
-                <button onclick="goBack()" class="btn btn-ghost btn-circle text-gray-600 hover:text-hf-green transition-colors" title="กลับไปเลือกโต๊ะ">
+                <button id="btn-back" onclick="goBack()" class="btn btn-ghost btn-circle text-gray-600 hover:text-hf-green transition-colors" title="กลับไปเลือกโต๊ะ">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                 </button>
                 <div>
@@ -92,11 +127,11 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
                     </button>
                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-2xl w-52 p-2 shadow-lg border border-gray-100 space-y-1">
-                        <li><a onclick="filterMenuDropdown('all', '🍽️')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍽️ ทั้งหมด</a></li>
-                        <li><a onclick="filterMenuDropdown('rice', '🍛')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍛 จานเดียว</a></li>
-                        <li><a onclick="filterMenuDropdown('noodle', '🍜')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍜 เส้น</a></li>
-                        <li><a onclick="filterMenuDropdown('drink', '🧋')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🧋 เครื่องดื่ม</a></li>
-                        <li><a onclick="filterMenuDropdown('dessert', '🍡')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍡 ของหวาน</a></li>
+                        <li><a id="cat-opt-all" onclick="filterMenuDropdown('all', '🍽️')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍽️ ทั้งหมด</a></li>
+                        <li><a id="cat-opt-rice" onclick="filterMenuDropdown('rice', '🍛')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍛 จานเดียว</a></li>
+                        <li><a id="cat-opt-noodle" onclick="filterMenuDropdown('noodle', '🍜')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍜 เส้น</a></li>
+                        <li><a id="cat-opt-drink" onclick="filterMenuDropdown('drink', '🧋')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🧋 เครื่องดื่ม</a></li>
+                        <li><a id="cat-opt-dessert" onclick="filterMenuDropdown('dessert', '🍡')" class="rounded-xl font-semibold text-gray-700 hover:bg-hf-green-light hover:text-hf-green-dark">🍡 ของหวาน</a></li>
                     </ul>
                 </div>
 
@@ -107,11 +142,11 @@
                 </div>
 
                 <!-- History -->
-                <a href="/order-history" class="btn btn-ghost btn-circle btn-sm text-hf-green hover:bg-hf-green-light">
+                <a id="btn-history" href="/order-history" class="btn btn-ghost btn-circle btn-sm text-hf-green hover:bg-hf-green-light">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                 </a>
 
-                <button onclick="openReviewsModal()" class="btn btn-ghost btn-circle btn-sm text-hf-green hover:bg-hf-green-light" title="Reviews">
+                <button id="btn-reviews" onclick="openReviewsModal()" class="btn btn-ghost btn-circle btn-sm text-hf-green hover:bg-hf-green-light" title="Reviews">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.02 3.138a1 1 0 00.95.69h3.3c.969 0 1.371 1.24.588 1.81l-2.67 1.94a1 1 0 00-.364 1.118l1.02 3.138c.3.922-.755 1.688-1.54 1.118l-2.67-1.94a1 1 0 00-1.176 0l-2.67 1.94c-.784.57-1.838-.196-1.539-1.118l1.02-3.138a1 1 0 00-.364-1.118l-2.67-1.94c-.783-.57-.38-1.81.588-1.81h3.3a1 1 0 00.95-.69l1.02-3.138z"/></svg>
                 </button>
 
@@ -139,15 +174,15 @@
         <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6 md:px-12 max-w-7xl mx-auto w-full"></div>
         <div id="empty-msg" class="hidden text-center py-20 text-gray-300">
             <div class="text-6xl mb-4">🔍</div>
-            <p class="text-lg font-medium">ไม่พบเมนูที่ค้นหา</p>
+            <p id="empty-msg-text" class="text-lg font-medium">ไม่พบเมนูที่ค้นหา</p>
         </div>
 
         <!-- ✅ STATUS BAR -->
         <div id="status-bar" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-40 shadow-2xl">
             <div class="max-w-lg mx-auto">
-                <p class="text-xs font-bold text-center text-gray-400 mb-4 uppercase tracking-widest">📊 สถานะออเดอร์</p>
+                <p id="status-bar-label" class="text-xs font-bold text-center text-gray-400 mb-4 uppercase tracking-widest">📊 สถานะออเดอร์</p>
                 <ul class="steps steps-horizontal w-full text-xs">
-                    <li class="step step-success font-bold text-hf-green">สั่งแล้ว</li>
+                    <li id="step-ordered" class="step step-success font-bold text-hf-green">สั่งแล้ว</li>
                     <li id="step-cooking" class="step font-bold text-gray-400">กำลังปรุง</li>
                     <li id="step-serving" class="step font-bold text-gray-400">เสิร์ฟแล้ว</li>
                 </ul>
@@ -160,8 +195,8 @@
 
         <!-- ✅ PAID BANNER -->
         <div id="paid-banner" class="hidden fixed top-28 left-0 right-0 z-40 px-4 py-3">
-            <div class="max-w-lg mx-auto bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-700 rounded-2xl p-4 text-center text-sm font-bold shadow-sm">
-                ✅ ชำระเงินเรียบร้อยแล้ว — ไม่สามารถสั่งอาหารเพิ่มได้
+            <div id="paid-banner-text" class="max-w-lg mx-auto bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 text-green-700 rounded-2xl p-4 text-center text-sm font-bold shadow-sm">
+                ✅ ชำระเงินเรียบร้อยแล้ว - ไม่สามารถสั่งอาหารเพิ่มได้
             </div>
         </div>
     </div>
@@ -171,13 +206,13 @@
         <label for="cart-drawer" class="drawer-overlay"></label>
         <div class="w-80 md:w-96 bg-white min-h-full flex flex-col p-6 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black text-hf-green-dark">🛒 ตะกร้า</h2>
-                <label for="cart-drawer" class="btn btn-ghost btn-circle btn-sm text-gray-500 hover:text-red-500">✕</label>
+                <h2 id="cart-title" class="text-2xl font-black text-hf-green-dark">🛒 ตะกร้า</h2>
+                <label for="cart-drawer" class="btn btn-ghost btn-circle btn-sm icon-btn-muted">✕</label>
             </div>
             <div id="cart-items" class="flex-grow space-y-3 overflow-y-auto"></div>
             <div class="border-t border-gray-200 pt-4 mt-4 space-y-4">
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600 font-semibold">ยอดรวม</span>
+                    <span id="cart-total-label" class="text-gray-600 font-semibold">ยอดรวม</span>
                     <span id="cart-total" class="text-3xl font-black text-hf-green">฿0</span>
                 </div>
                 <button id="order-btn" onclick="placeOrder()" disabled class="btn btn-block bg-hf-green border-none text-white rounded-full h-12 text-base font-bold btn-disabled">🍽️ สั่งอาหาร</button>
@@ -199,11 +234,11 @@
         </div>
         <div class="p-6 space-y-6">
             <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">✨ ตัวเลือกเพิ่มเติม</p>
+                <p id="modal-toppings-label" class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">✨ ตัวเลือกเพิ่มเติม</p>
                 <div id="modal-toppings" class="flex flex-wrap gap-2"></div>
             </div>
             <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">📦 จำนวน</p>
+                <p id="modal-qty-label" class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">📦 จำนวน</p>
                 <div class="flex items-center gap-4 bg-hf-bg p-3 rounded-full w-fit">
                     <button onclick="changeQty(-1)" class="btn btn-circle btn-sm border-0 bg-white text-hf-green hover:bg-hf-green-light font-bold text-lg">−</button>
                     <span id="modal-qty" class="font-black text-xl w-8 text-center">1</span>
@@ -211,12 +246,12 @@
                 </div>
             </div>
             <div>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">📝 หมายเหตุถึงเชฟ</p>
+                <p id="modal-note-label" class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">📝 หมายเหตุถึงเชฟ</p>
                 <textarea id="modal-note" rows="3" placeholder="เช่น ไม่เผ็ด, ไม่ใส่ผักชี..." class="textarea textarea-bordered w-full rounded-2xl bg-hf-bg border-gray-200 text-sm focus:border-hf-green focus:ring-hf-green/20 resize-none p-3"></textarea>
             </div>
             <div class="flex gap-3 pt-4">
-                <button onclick="document.getElementById('item-modal').close()" class="btn btn-outline border-gray-200 text-gray-600 flex-1 rounded-full font-semibold hover:border-gray-300">ยกเลิก</button>
-                <button onclick="addToCart()" class="btn bg-hf-green border-none text-white flex-1 rounded-full font-bold text-base hover:bg-hf-green-dark">✅ เพิ่มลงตะกร้า</button>
+                <button id="btn-modal-cancel" onclick="document.getElementById('item-modal').close()" class="btn btn-outline border-gray-200 text-gray-600 flex-1 rounded-full font-semibold hover:border-gray-300">ยกเลิก</button>
+                <button id="btn-add-cart" onclick="addToCart()" class="btn bg-hf-green border-none text-white flex-1 rounded-full font-bold text-base hover:bg-hf-green-dark">✅ เพิ่มลงตะกร้า</button>
             </div>
         </div>
     </div>
@@ -230,7 +265,7 @@
                 <p class="text-sm text-gray-400 mt-1"><span id="reviews-average-label">คะแนนเฉลี่ย</span>: <span id="reviews-average-value" class="font-bold text-hf-green">0.0</span></p>
             </div>
             <form method="dialog">
-                <button class="btn btn-ghost btn-circle btn-sm text-gray-500 hover:text-red-500">✕</button>
+                <button class="btn btn-ghost btn-circle btn-sm icon-btn-muted">✕</button>
             </form>
         </div>
         <div class="p-6 max-h-[70vh] overflow-y-auto">
@@ -244,9 +279,102 @@
 <script>
 let allMenuItems = [];
 
+function getMenuName(item) {
+    return lang === 'en'
+        ? (item.name_en || item.name || item.name_th || '-')
+        : (item.name_th || item.name || item.name_en || '-');
+}
+
+function getCategoryText(category) {
+    return tl[lang][category] || category;
+}
+
+function translateToppingLabel(label) {
+    const raw = String(label || '').trim();
+    if (lang !== 'en') return raw.replace('หวานปกต��', 'หวานปกติ');
+
+    const priceMatch = raw.match(/\(\s*\+\s*([\d.]+)\s*\)/);
+    const priceSuffix = priceMatch ? ` (+${priceMatch[1]})` : '';
+    const base = raw.replace(/\s*\(\s*\+\s*[\d.]+\s*\)/, '').trim().replace('หวานปกต��', 'หวานปกติ');
+
+    const toppingMap = {
+        'ไข่ดาว': 'Fried Egg',
+        'ข้าวเพิ่ม': 'Extra Rice',
+        'หมูพิเศษ': 'Extra Pork',
+        'กุ้งพิเศษ': 'Extra Shrimp',
+        'เส้นเพิ่ม': 'Extra Noodles',
+        'ปูพิเศษ': 'Extra Crab',
+        'เส้นใหญ่': 'Wide Noodles',
+        'เส้นเล็ก': 'Thin Noodles',
+        'ข้าว': 'Rice',
+        'ลูกชิ้น': 'Meatballs',
+        'หวานน้อย': 'Less Sweet',
+        'หวานปกติ': 'Normal Sweet',
+        'หวานมาก': 'Extra Sweet',
+        'กะทิเพิ่ม': 'Extra Coconut Milk',
+        'ช็อกโกแลต': 'Chocolate',
+        'นมข้น': 'Condensed Milk'
+    };
+
+    return `${toppingMap[base] || base}${priceSuffix}`;
+}
+
+function updateCategoryOptions() {
+    const optionMap = {
+        all: '🍽️',
+        rice: '🍛',
+        noodle: '🍜',
+        drink: '🧋',
+        dessert: '🍡'
+    };
+    Object.entries(optionMap).forEach(([category, icon]) => {
+        const el = document.getElementById(`cat-opt-${category}`);
+        if (el) el.textContent = `${icon} ${getCategoryText(category)}`;
+    });
+}
+
+function updateStaticTexts() {
+    document.title = tl[lang].pageTitle;
+    document.documentElement.lang = lang;
+
+    const mappings = {
+        'btn-back': { prop: 'title', value: tl[lang].backTitle },
+        'menu-search': { prop: 'placeholder', value: tl[lang].searchShort },
+        'menu-search-mobile': { prop: 'placeholder', value: tl[lang].searchShort },
+        'btn-history': { prop: 'title', value: tl[lang].historyBtnTitle },
+        'btn-reviews': { prop: 'title', value: tl[lang].reviewsBtnTitle },
+        'empty-msg-text': { prop: 'innerText', value: tl[lang].noMenu },
+        'status-bar-label': { prop: 'innerText', value: `📊 ${tl[lang].statusBar}` },
+        'step-ordered': { prop: 'innerText', value: tl[lang].ordered },
+        'step-cooking': { prop: 'innerText', value: tl[lang].cooking },
+        'step-serving': { prop: 'innerText', value: tl[lang].serving },
+        'btn-checkout': { prop: 'innerText', value: `💳 ${tl[lang].pay}` },
+        'cancel-order-btn': { prop: 'innerText', value: `❌ ${tl[lang].cancel}` },
+        'paid-banner-text': { prop: 'innerText', value: `✅ ${tl[lang].paidBanner}` },
+        'cart-title': { prop: 'innerText', value: `🛒 ${tl[lang].cart}` },
+        'cart-total-label': { prop: 'innerText', value: tl[lang].total },
+        'order-btn': { prop: 'innerText', value: `🍽️ ${tl[lang].order}` },
+        'modal-toppings-label': { prop: 'innerText', value: `✨ ${tl[lang].toppings}` },
+        'modal-qty-label': { prop: 'innerText', value: `📦 ${tl[lang].qty}` },
+        'modal-note-label': { prop: 'innerText', value: `📝 ${tl[lang].specialReq}` },
+        'modal-note': { prop: 'placeholder', value: tl[lang].specialPH },
+        'btn-modal-cancel': { prop: 'innerText', value: tl[lang].cancel },
+        'btn-add-cart': { prop: 'innerText', value: `✅ ${tl[lang].addCart}` },
+        'reviews-title': { prop: 'innerText', value: tl[lang].reviewsTitle },
+        'reviews-average-label': { prop: 'innerText', value: tl[lang].avgScore }
+    };
+
+    Object.entries(mappings).forEach(([id, config]) => {
+        const el = document.getElementById(id);
+        if (el) el[config.prop] = config.value;
+    });
+
+    updateCategoryOptions();
+}
+
 function getMenuVisual(item, sizeClass = 'h-24 w-24') {
     if (item.image_url) {
-        const safeAlt = (item.name_th || item.name || 'menu item').replace(/"/g, '&quot;');
+        const safeAlt = getMenuName(item).replace(/"/g, '&quot;');
         return `<img src="${item.image_url}" alt="${safeAlt}" class="${sizeClass} mx-auto rounded-3xl object-cover shadow-sm border border-gray-100" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><div class="text-7xl" style="display:none;">${item.img}</div>`;
     }
     return `<div class="text-7xl">${item.img}</div>`;
@@ -262,7 +390,7 @@ async function renderMenu(filter = 'all', q = '') {
             console.error("❌ Menu fetch error:", e);
             document.getElementById('menu-grid').innerHTML = `
                 <div class="col-span-full text-center py-20">
-                    <p class="text-2xl text-red-400 font-bold">❌ ไม่สามารถโหลดเมนู</p>
+                    <p class="text-2xl text-red-400 font-bold">❌ ${tl[lang].menuLoadFail}</p>
                     <p class="text-sm text-gray-400 mt-2">Error: ${e.message}</p>
                 </div>
             `;
@@ -285,10 +413,10 @@ async function renderMenu(filter = 'all', q = '') {
             <div class="p-4 text-center space-y-3">
                 <div>${getMenuVisual(item)}</div>
                 <div>
-                    <h2 class="font-bold text-sm text-neutral leading-tight">${item.name_th || item.name}</h2>
+                    <h2 class="font-bold text-sm text-neutral leading-tight">${getMenuName(item)}</h2>
                     <p class="text-hf-green font-black text-lg mt-1">฿${item.price}</p>
                 </div>
-                <button class="add-btn btn btn-block bg-hf-green-light text-hf-green-dark border-none rounded-full font-bold text-sm hover:bg-hf-green hover:text-white">+ เพิ่ม</button>
+                <button class="add-btn btn btn-block bg-hf-green-light text-hf-green-dark border-none rounded-full font-bold text-sm hover:bg-hf-green hover:text-white">+ ${tl[lang].addMore}</button>
             </div>`;
         grid.appendChild(card);
     });
@@ -304,7 +432,7 @@ function openItemModal(item) {
     modalEmoji.innerText = item.img;
     if (item.image_url) {
         modalImage.src = item.image_url;
-        modalImage.alt = item.name_th || item.name || 'menu item';
+        modalImage.alt = getMenuName(item);
         modalImage.classList.remove('hidden');
         modalEmoji.classList.add('hidden');
         modalImage.onerror = () => {
@@ -316,19 +444,19 @@ function openItemModal(item) {
         modalImage.src = '';
         modalEmoji.classList.remove('hidden');
     }
-    document.getElementById('modal-name').innerText = item.name_th || item.name;
+    document.getElementById('modal-name').innerText = getMenuName(item);
     document.getElementById('modal-price').innerText = `฿${item.price}`;
     document.getElementById('modal-qty').innerText = 1;
     document.getElementById('modal-note').value = '';
     const tc = document.getElementById('modal-toppings');
     tc.innerHTML = '';
     if (!item.toppings || !item.toppings.length) {
-        tc.innerHTML = '<span class="text-xs text-gray-300">ไม่มีตัวเลือกเพิ่ม</span>';
+        tc.innerHTML = `<span class="text-xs text-gray-300">${tl[lang].noExtraOptions}</span>`;
     } else {
         item.toppings.forEach(top => {
             const btn = document.createElement('button');
             btn.className = 'btn btn-xs rounded-full border-gray-200 bg-white text-gray-600 hover:border-hf-green hover:text-hf-green transition-all';
-            btn.innerText = top;
+            btn.innerText = translateToppingLabel(top);
             btn.onclick = () => {
                 const idx = tempItem.selectedToppings.indexOf(top);
                 if (idx > -1) {
@@ -359,7 +487,11 @@ function addToCart() {
     });
     const totalPrice = (tempItem.price + extra) * tempItem.qty;
     cart.push({
-        menuId: tempItem.id, name: tempItem.name_th || tempItem.name, img: tempItem.img,
+        menuId: tempItem.id,
+        name: tempItem.name_th || tempItem.name,
+        name_th: tempItem.name_th || tempItem.name,
+        name_en: tempItem.name || tempItem.name_th,
+        img: tempItem.img,
         image_url: tempItem.image_url || null,
         qty: tempItem.qty, price: tempItem.price,
         toppings: tempItem.selectedToppings,
@@ -384,7 +516,7 @@ function updateCartUI() {
     const total = cart.reduce((s,i) => s+i.totalPrice, 0);
     if (!cart.length) {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-48 text-gray-300">
-            <div class="text-5xl mb-3">🛒</div><p class="text-sm font-medium">ตะกร้าว่างเปล่า</p></div>`;
+            <div class="text-5xl mb-3">🛒</div><p class="text-sm font-medium">${tl[lang].emptyCart}</p></div>`;
         document.getElementById('order-btn').disabled = true;
         document.getElementById('order-btn').classList.add('btn-disabled');
     } else {
@@ -392,17 +524,17 @@ function updateCartUI() {
             <div class="flex gap-3 p-3 bg-hf-bg rounded-xl items-start border border-gray-100">
                 <div class="shrink-0 w-12 h-12 flex items-center justify-center overflow-hidden rounded-2xl bg-white border border-gray-100">
                     ${item.image_url
-                        ? `<img src="${item.image_url}" alt="${(item.name || 'menu item').replace(/"/g, '&quot;')}" class="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><span class="text-2xl" style="display:none;">${item.img}</span>`
+                        ? `<img src="${item.image_url}" alt="${getMenuName(item).replace(/"/g, '&quot;')}" class="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><span class="text-2xl" style="display:none;">${item.img}</span>`
                         : `<span class="text-2xl">${item.img}</span>`}
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="font-bold text-sm text-neutral truncate">${item.name} <span class="text-gray-400 font-normal text-xs">×${item.qty}</span></p>
-                    ${item.toppings.length ? `<p class="text-[11px] text-gray-500 truncate mt-1">${item.toppings.join(', ')}</p>` : ''}
-                    ${item.note ? `<p class="text-[11px] text-hf-green mt-1 font-medium">📝 ${item.note}</p>` : ''}
+                    <p class="font-bold text-sm text-neutral truncate">${getMenuName(item)} <span class="text-gray-400 font-normal text-xs">×${item.qty}</span></p>
+                    ${item.toppings.length ? `<p class="text-[11px] text-gray-500 truncate mt-1">${item.toppings.map(translateToppingLabel).join(', ')}</p>` : ''}
+                    ${item.note ? `<p class="text-[11px] text-hf-green mt-1 font-medium">📝 ${tl[lang].noteLabel}${item.note}</p>` : ''}
                 </div>
                 <div class="text-right shrink-0">
                     <p class="text-sm font-black text-hf-green">฿${item.totalPrice.toFixed(2)}</p>
-                    <button onclick="removeFromCart(${i})" class="text-[10px] text-red-400 hover:text-red-600 font-bold mt-2 hover:underline">ลบ</button>
+                    <button onclick="removeFromCart(${i})" class="text-[10px] text-red-400 hover:text-red-600 font-bold mt-2 hover:underline">${tl[lang].remove}</button>
                 </div>
             </div>`).join('');
         document.getElementById('order-btn').disabled = false;
@@ -433,10 +565,10 @@ async function placeOrder() {
         DB.set(DB.KEYS.CURRENT_ORDER, order);
 
         Swal.fire({
-            title:'สั่งอาหารสำเร็จ! 🎉',
-            text:'เชฟได้รับออเดอร์แล้ว กรุณารอสักครู่นะครับ',
+            title:`${tl[lang].orderOk} 🎉`,
+            text:tl[lang].orderOkSub,
             icon:'success',
-            confirmButtonText:'ตกลง',
+            confirmButtonText:tl[lang].ok,
             confirmButtonColor:'#A3B18A'
         }).then(() => {
             ordered = true;
@@ -447,7 +579,7 @@ async function placeOrder() {
             pollOrderStatus(order.id);
         });
     } catch(err) {
-        Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+        Swal.fire('Error', err.message, 'error');
     }
 }
 
@@ -547,13 +679,20 @@ function getSearchValue() {
 
 function setLang(l) {
     lang = l;
+    localStorage.setItem('customerLang', l);
     document.getElementById('btn-th').className = `btn btn-xs join-item border-none font-bold ${l==='th'?'bg-hf-green-light text-hf-green-dark':'bg-transparent text-gray-500 hover:text-hf-green'}`;
     document.getElementById('btn-en').className = `btn btn-xs join-item border-none font-bold ${l==='en'?'bg-hf-green-light text-hf-green-dark':'bg-transparent text-gray-500 hover:text-hf-green'}`;
+    updateStaticTexts();
     if (document.getElementById('reviews-modal').open) {
         document.getElementById('reviews-title').innerText = tl[lang].reviewsTitle;
         document.getElementById('reviews-average-label').innerText = tl[lang].avgScore;
         renderPublicReviews(publicReviews);
     }
+    if (tempItem && document.getElementById('item-modal').open) {
+        document.getElementById('modal-name').innerText = getMenuName(tempItem);
+    }
+    updateCartUI();
+    renderMenu(currentCat, getSearchValue());
 }
 
 async function cancelOrder() {
@@ -561,13 +700,13 @@ async function cancelOrder() {
     if (!order) return;
 
     Swal.fire({
-        title: 'ยกเลิกออเดอร์?',
-        text: 'ออเดอร์จะถูกยกเลิกและไม่สามารถกู้คืนได้',
+        title: tl[lang].orderCancelTitle,
+        text: tl[lang].orderCancelText,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
-        confirmButtonText: 'ยกเลิก',
-        cancelButtonText: 'ปิด',
+        confirmButtonText: tl[lang].orderCancelConfirm,
+        cancelButtonText: tl[lang].close,
         reverseButtons: true
     }).then(async r => {
         if (!r.isConfirmed) return;
@@ -579,11 +718,11 @@ async function cancelOrder() {
                 body: JSON.stringify({ reason: 'Customer cancelled' })
             });
 
-            if (!res.ok) throw new Error('ไม่สามารถยกเลิกออเดอร์ได้');
+            if (!res.ok) throw new Error(tl[lang].orderCancelFail);
 
             Swal.fire({
-                title: 'ยกเลิกแล้ว',
-                text: 'ออเดอร์ถูกยกเลิกสำเร็จ',
+                title: tl[lang].orderCancelled,
+                text: tl[lang].orderCancelledSub,
                 icon: 'success',
                 timer: 2000,
                 showConfirmButton: false
@@ -596,7 +735,7 @@ async function cancelOrder() {
                 window.location.href = '/';
             }, 2000);
         } catch(e) {
-            Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+            Swal.fire('Error', e.message, 'error');
         }
     });
 }
@@ -607,13 +746,13 @@ async function goBack() {
     const selectedTable = DB.get(DB.KEYS.SELECTED_TABLE);
 
     Swal.fire({
-        title: 'ออกจากโต๊ะ?',
-        text: 'คุณแน่ใจหรือ? ออเดอร์ที่ยังไม่ชำระจะถูกยกเลิก',
+        title: tl[lang].leaveTableTitle,
+        text: tl[lang].leaveTableText,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#ef4444',
-        confirmButtonText: 'ใช่ ออกจากโต๊ะ',
-        cancelButtonText: 'ยกเลิก',
+        confirmButtonText: tl[lang].leaveTableConfirm,
+        cancelButtonText: tl[lang].cancel,
         reverseButtons: true
     }).then(async (result) => {
         if (!result.isConfirmed) return;
@@ -646,7 +785,7 @@ async function goBack() {
             window.location.href = '/';
         } catch (error) {
             console.error("❌ Error:", error);
-            Swal.fire('���กิดข้อผิดพลาด', error.message, 'error');
+            Swal.fire('Error', error.message, 'error');
         }
     });
 }
@@ -663,11 +802,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (typeof DB === 'undefined') {
         console.error("❌ DB failed to load");
-        alert("ไม่สามารถเชื่อมต่อระบบได้");
+        alert(tl[lang].systemConnectFail);
         return;
     }
 
     console.log("✅ DB loaded, initializing menu page...");
+    updateStaticTexts();
 
     const tableId = DB.get(DB.KEYS.SELECTED_TABLE);
     if (!tableId) {
@@ -708,7 +848,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("✅ Menu loaded successfully");
     } catch (err) {
         console.error("❌ Menu load error:", err);
-        Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+        Swal.fire('Error', err.message, 'error');
     }
     updateCartUI();
 

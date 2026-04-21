@@ -136,7 +136,7 @@ function registerAliasRoutes(app, deps) {
    *         description: Menu item created
    */
   app.post("/menu", async (req, res) => {
-    const { name, name_th, category, price, toppings, img } = req.body;
+    const { name, name_th, category, price, toppings, img, image_url } = req.body;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -148,8 +148,8 @@ function registerAliasRoutes(app, deps) {
 
       const newId = `MN-${Date.now()}`;
       await conn.query(
-        "INSERT INTO menu_items (id, category_id, name_th, name_en, price, emoji) VALUES (?,?,?,?,?,?)",
-        [newId, catRow[0].id, name_th || name, name || name_th, parseFloat(price) || 0, img || "🍽️"]
+        "INSERT INTO menu_items (id, category_id, name_th, name_en, price, emoji, image_url) VALUES (?,?,?,?,?,?,?)",
+        [newId, catRow[0].id, name_th || name, name || name_th, parseFloat(price) || 0, img || "🍽️", image_url || null]
       );
       const tops = Array.isArray(toppings) ? toppings : [];
       for (let i = 0; i < tops.length; i++) {
@@ -159,7 +159,16 @@ function registerAliasRoutes(app, deps) {
         );
       }
       await conn.commit();
-      res.json({ id: newId, name_th: name_th || name, category, price: parseFloat(price) || 0, toppings: tops, img: img || "🍽️", available: 1 });
+      res.json({
+        id: newId,
+        name_th: name_th || name,
+        category,
+        price: parseFloat(price) || 0,
+        toppings: tops,
+        img: img || "🍽️",
+        image_url: image_url || null,
+        available: 1
+      });
     } catch (err) {
       await conn.rollback();
       console.error("❌ Error creating menu item:", err);
@@ -187,7 +196,7 @@ function registerAliasRoutes(app, deps) {
    */
   app.put("/menu/:id", async (req, res) => {
     const { id } = req.params;
-    const { name_th, nameTh, name, category, price, toppings, img, available } = req.body;
+    const { name_th, nameTh, name, category, price, toppings, img, image_url, available } = req.body;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -198,6 +207,7 @@ function registerAliasRoutes(app, deps) {
       if (name) { fields.push("name_en = ?"); vals.push(name); }
       if (price !== undefined) { fields.push("price = ?"); vals.push(parseFloat(price)); }
       if (img) { fields.push("emoji = ?"); vals.push(img); }
+      if (image_url !== undefined) { fields.push("image_url = ?"); vals.push(image_url || null); }
       if (available !== undefined) { fields.push("is_available = ?"); vals.push(available ? 1 : 0); }
 
       if (category) {

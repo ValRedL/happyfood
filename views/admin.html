@@ -56,6 +56,9 @@
         <a href="#users" onclick="showPage('users')" class="menu-item" id="nav-users">
             <span class="text-lg mr-3">👥</span> ผู้ใช้งาน
         </a>
+        <a href="#reviews" onclick="showPage('reviews')" class="menu-item" id="nav-reviews">
+            <span class="text-lg mr-3">⭐</span> รีวิวลูกค้า
+        </a>
         <a href="#history" onclick="showPage('history')" class="menu-item" id="nav-history">
             <span class="text-lg mr-3">📋</span> ประวัติ
         </a>
@@ -74,6 +77,10 @@
             <p id="page-subtitle" class="text-gray-400 mt-1">ยินดีต้อนรับ Admin</p>
         </div>
         <div class="flex gap-3 items-center">
+            <div class="join border border-gray-200 rounded-full overflow-hidden">
+                <button id="btn-lang-th" onclick="setLang('th')" class="btn btn-xs md:btn-sm join-item bg-hf-green-light border-none font-bold">TH</button>
+                <button id="btn-lang-en" onclick="setLang('en')" class="btn btn-xs md:btn-sm join-item bg-transparent border-none">EN</button>
+            </div>
             <span id="time" class="text-sm text-gray-500"></span>
             <div class="avatar placeholder">
                 <div class="bg-hf-green text-white rounded-full w-10">
@@ -85,6 +92,21 @@
 
     <!-- ✅ DASHBOARD PAGE -->
     <div id="page-dashboard" class="page-content">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div>
+                    <h3 id="dashboard-filter-title" class="text-xl font-bold text-neutral">📅 ตัวกรองแดชบอร์ด</h3>
+                    <p id="dashboard-filter-subtitle" class="text-sm text-gray-400 mt-1">กรองข้อมูลจำนวนลูกค้า ยอดขาย รีวิว และเมนูยอดนิยมตามช่วงวันที่</p>
+                </div>
+                <button id="dashboard-filter-button" onclick="applyDashboardRange()" class="btn btn-sm bg-hf-green border-none text-white rounded-lg">อัปเดตข้อมูล</button>
+            </div>
+            <div class="flex gap-3 items-center flex-wrap">
+                <input type="date" id="dashboard-date-start" class="input input-bordered rounded-xl" />
+                <span id="dashboard-date-separator" class="text-gray-400">ถึง</span>
+                <input type="date" id="dashboard-date-end" class="input input-bordered rounded-xl" />
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="stat-card green">
                 <p class="text-sm text-green-600 font-bold uppercase">โต๊ะว่าง</p>
@@ -99,18 +121,34 @@
                 <p id="stat-cleaning" class="text-4xl font-black text-yellow-700 mt-2">0</p>
             </div>
             <div class="stat-card blue">
-                <p class="text-sm text-blue-600 font-bold uppercase">ยอดขายวนนี้</p>
+                <p class="text-sm text-blue-600 font-bold uppercase">ยอดขายตามช่วงวันที่</p>
                 <p id="stat-sales-today" class="text-3xl font-black text-blue-700 mt-2">฿0</p>
+            </div>
+            <div class="stat-card green">
+                <p class="text-sm text-green-600 font-bold uppercase">จำนวนลูกค้า</p>
+                <p id="stat-customers" class="text-4xl font-black text-green-700 mt-2">0</p>
+            </div>
+            <div class="stat-card yellow">
+                <p class="text-sm text-yellow-600 font-bold uppercase">คะแนนเฉลี่ย</p>
+                <p id="stat-avg-rating" class="text-4xl font-black text-yellow-700 mt-2">0.0</p>
+            </div>
+            <div class="stat-card blue">
+                <p class="text-sm text-blue-600 font-bold uppercase">เมนูยอดนิยม</p>
+                <p id="stat-top-menu" class="text-lg font-black text-blue-700 mt-3">-</p>
+            </div>
+            <div class="stat-card red">
+                <p class="text-sm text-red-600 font-bold uppercase">รีวิวทั้งหมด</p>
+                <p id="stat-review-count" class="text-4xl font-black text-red-700 mt-2">0</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-neutral mb-4">📈 ยอดขาย 7 วันล่าสุด</h3>
+                <h3 id="dashboard-chart-title" class="text-lg font-bold text-neutral mb-4">📈 ยอดขาย 7 วันล่าสุด</h3>
                 <canvas id="salesChart" height="80"></canvas>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-bold text-neutral mb-4">💳 ช่องทางชำระเงิน</h3>
+                <h3 id="dashboard-payment-title" class="text-lg font-bold text-neutral mb-4">💳 ช่องทางชำระเงิน</h3>
                 <div id="payment-methods" class="space-y-3">
                     <!-- render จาก JS -->
                 </div>
@@ -118,7 +156,7 @@
         </div>
 
         <div class="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-bold text-neutral mb-4">🔥 ออเดอร์ที่กำลังใช้งาน</h3>
+            <h3 id="dashboard-active-orders-title" class="text-lg font-bold text-neutral mb-4">🔥 ออเดอร์ที่กำลังใช้งาน</h3>
             <div id="active-orders" class="space-y-3">
                 <!-- render จาก JS -->
             </div>
@@ -129,8 +167,8 @@
     <div id="page-tables" class="page-content hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-neutral">📊 สถานะโต๊ะทั้งหมด</h3>
-                <button onclick="showAddTableModal()" class="btn btn-sm bg-hf-green border-none text-white rounded-lg">+ เพิ่มโต๊ะ</button>
+                <h3 id="tables-section-title" class="text-xl font-bold text-neutral">📊 สถานะโต๊ะทั้งหมด</h3>
+                <button id="btn-add-table" onclick="showAddTableModal()" class="btn btn-sm bg-hf-green border-none text-white rounded-lg">+ เพิ่มโต๊ะ</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -156,8 +194,8 @@
     <div id="page-menu" class="page-content hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-neutral">🍽️ จัดการเมนูอาหาร</h3>
-                <button onclick="showAddMenuModal()" class="btn btn-sm bg-hf-green border-none text-white rounded-lg">+ เพิ่มเมนู</button>
+                <h3 id="menu-section-title" class="text-xl font-bold text-neutral">🍽️ จัดการเมนูอาหาร</h3>
+                <button id="btn-add-menu" onclick="showAddMenuModal()" class="btn btn-sm bg-hf-green border-none text-white rounded-lg">+ เพิ่มเมนู</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -167,6 +205,7 @@
                             <th class="px-4 py-3 text-left font-bold">หมวดหมู่</th>
                             <th class="px-4 py-3 text-left font-bold">ราคา</th>
                             <th class="px-4 py-3 text-left font-bold">สถานะ</th>
+                            <th class="px-4 py-3 text-left font-bold">รูปภาพ</th>
                             <th class="px-4 py-3 text-center font-bold">จัดการ</th>
                         </tr>
                     </thead>
@@ -181,7 +220,7 @@
     <!-- ✅ SALES PAGE -->
     <div id="page-sales" class="page-content hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-xl font-bold text-neutral mb-6">💰 ยอดขายทั้งหมด</h3>
+            <h3 id="sales-section-title" class="text-xl font-bold text-neutral mb-6">💰 ยอดขายทั้งหมด</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-hf-bg border-b border-gray-200">
@@ -206,10 +245,10 @@
             <div class="xl:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div class="flex items-start justify-between gap-4 mb-5">
                     <div>
-                        <h3 class="text-xl font-bold text-neutral">🍳 สร้าง Cook ID</h3>
-                        <p class="text-sm text-gray-400 mt-1">สร้างรหัสให้เชฟนำไปสมัครบัญชีได้ทันที</p>
+                        <h3 id="cookid-create-title" class="text-xl font-bold text-neutral">🍳 สร้าง Cook ID</h3>
+                        <p id="cookid-create-subtitle" class="text-sm text-gray-400 mt-1">สร้างรหัสให้เชฟนำไปสมัครบัญชีได้ทันที</p>
                     </div>
-                    <button onclick="fillSuggestedCookId()" class="btn btn-sm btn-outline rounded-lg">สุ่มรหัส</button>
+                    <button id="btn-random-cookid" onclick="fillSuggestedCookId()" class="btn btn-sm btn-outline rounded-lg">สุ่มรหัส</button>
                 </div>
 
                 <div class="space-y-4">
@@ -217,7 +256,7 @@
                         <label class="text-sm font-bold text-gray-600">Cook ID</label>
                         <div class="flex gap-2 mt-2">
                             <input id="new-cook-id" type="text" placeholder="เช่น CK-482931" class="input input-bordered w-full rounded-xl uppercase" />
-                            <button onclick="createCookInvite()" class="btn bg-hf-green border-none text-white rounded-xl">สร้าง</button>
+                            <button id="btn-create-cookid" onclick="createCookInvite()" class="btn bg-hf-green border-none text-white rounded-xl">สร้าง</button>
                         </div>
                     </div>
 
@@ -237,10 +276,10 @@
             <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div class="flex justify-between items-center gap-4 mb-5 flex-wrap">
                     <div>
-                        <h3 class="text-xl font-bold text-neutral">🪪 รายการ Cook ID</h3>
-                        <p class="text-sm text-gray-400 mt-1">คัดลอกส่งให้เชฟ หรือลบสิทธิ์เมื่อไม่ต้องการใช้งานแล้ว</p>
+                        <h3 id="cookid-list-title" class="text-xl font-bold text-neutral">🪪 รายการ Cook ID</h3>
+                        <p id="cookid-list-subtitle" class="text-sm text-gray-400 mt-1">คัดลอกส่งให้เชฟ หรือลบสิทธิ์เมื่อไม่ต้องการใช้งานแล้ว</p>
                     </div>
-                    <button onclick="loadInvites()" class="btn btn-sm btn-outline rounded-lg">รีเฟรช</button>
+                    <button id="btn-refresh-invites" onclick="loadInvites()" class="btn btn-sm btn-outline rounded-lg">รีเฟรช</button>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -249,7 +288,7 @@
                             <tr>
                                 <th class="px-4 py-3 text-left font-bold">Cook ID</th>
                                 <th class="px-4 py-3 text-left font-bold">สถานะ</th>
-                                <th class="px-4 py-3 text-left font-bold">สร้างเมื่อ</th>
+                                <th id="invite-created-col" class="px-4 py-3 text-left font-bold">สร้างเมื่อ</th>
                                 <th class="px-4 py-3 text-center font-bold">จัดการ</th>
                             </tr>
                         </thead>
@@ -262,7 +301,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-xl font-bold text-neutral mb-6">👥 ผู้ใช้งาน</h3>
+            <h3 id="users-section-title" class="text-xl font-bold text-neutral mb-6">👥 ผู้ใช้งาน</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-hf-bg border-b border-gray-200">
@@ -282,35 +321,82 @@
         </div>
     </div>
 
+    <!-- ✅ REVIEWS PAGE -->
+    <div id="page-reviews" class="page-content hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+                <div>
+                    <h3 id="reviews-section-title" class="text-xl font-bold text-neutral">⭐ รีวิวและคะแนนจากลูกค้า</h3>
+                    <p id="reviews-section-subtitle" class="text-sm text-gray-400 mt-1">ดูความคิดเห็นทั้งหมดพร้อมกรองช่วงวันที่และจำนวนดาว</p>
+                </div>
+                <button id="btn-refresh-reviews" onclick="loadReviewsPage()" class="btn btn-sm bg-hf-green border-none text-white rounded-lg">รีเฟรช</button>
+            </div>
+            <div class="flex gap-3 items-center flex-wrap">
+                <input type="date" id="review-date-start" class="input input-bordered rounded-xl" />
+                <span id="reviews-date-separator" class="text-gray-400">ถึง</span>
+                <input type="date" id="review-date-end" class="input input-bordered rounded-xl" />
+                <select id="review-rating-filter" class="select select-bordered rounded-xl" onchange="loadReviewsPage()">
+                    <option value="all">ทุกคะแนน</option>
+                    <option value="5">5 ดาว</option>
+                    <option value="4">4 ดาว</option>
+                    <option value="3">3 ดาว</option>
+                    <option value="2">2 ดาว</option>
+                    <option value="1">1 ดาว</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="stat-card yellow">
+                <p id="review-avg-label" class="text-sm text-yellow-600 font-bold uppercase">คะแนนเฉลี่ย</p>
+                <p id="review-avg-rating" class="text-4xl font-black text-yellow-700 mt-2">0.0</p>
+            </div>
+            <div class="stat-card green">
+                <p id="review-positive-label" class="text-sm text-green-600 font-bold uppercase">รีวิวเชิงบวก (4-5)</p>
+                <p id="review-positive-count" class="text-4xl font-black text-green-700 mt-2">0</p>
+            </div>
+            <div class="stat-card red">
+                <p id="review-negative-label" class="text-sm text-red-600 font-bold uppercase">รีวิวต้องติดตาม (1-2)</p>
+                <p id="review-negative-count" class="text-4xl font-black text-red-700 mt-2">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div id="reviews-admin-list" class="space-y-4">
+                <!-- render จาก JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- ✅ HISTORY PAGE -->
     <div id="page-history" class="page-content hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-                <h3 class="text-xl font-bold text-neutral">📋 ประวัติทั้งหมด</h3>
+            <h3 id="history-section-title" class="text-xl font-bold text-neutral">📋 ประวัติทั้งหมด</h3>
                 <div class="flex gap-3 items-center flex-wrap">
                     <input type="date" id="filter-date-start" class="input input-bordered rounded-xl" onchange="loadHistory()" />
-                    <span class="text-gray-400">ถึง</span>
+                    <span id="history-date-separator" class="text-gray-400">ถึง</span>
                     <input type="date" id="filter-date-end" class="input input-bordered rounded-xl" onchange="loadHistory()" />
-                    <button onclick="exportHistory()" class="btn btn-sm btn-outline border-hf-green text-hf-green rounded-lg">📥 ส่งออก</button>
+                    <button id="btn-export-history" onclick="exportHistory()" class="btn btn-sm btn-outline border-hf-green text-hf-green rounded-lg">📥 ส่งออก</button>
                 </div>
             </div>
 
             <div class="mb-4">
                 <div class="stats shadow-sm border border-gray-100 rounded-xl w-full">
                     <div class="stat">
-                        <div class="stat-title text-xs">รวมทั้งสิ้น</div>
+                        <div id="history-total-records-label" class="stat-title text-xs">รวมทั้งสิ้น</div>
                         <div class="stat-value text-2xl text-hf-green" id="history-total-records">0</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-title text-xs">ยอดขายรวม</div>
+                        <div id="history-total-sales-label" class="stat-title text-xs">ยอดขายรวม</div>
                         <div class="stat-value text-2xl text-hf-green" id="history-total-sales">฿0</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-title text-xs">จำนวนออเดอร์</div>
+                        <div id="history-total-orders-label" class="stat-title text-xs">จำนวนออเดอร์</div>
                         <div class="stat-value text-2xl text-hf-green" id="history-total-orders">0</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-title text-xs">เฉลี่ยต่อออเดอร์</div>
+                        <div id="history-avg-per-order-label" class="stat-title text-xs">เฉลี่ยต่อออเดอร์</div>
                         <div class="stat-value text-2xl text-hf-green" id="history-avg-per-order">฿0</div>
                     </div>
                 </div>
@@ -327,7 +413,7 @@
                             <th class="px-4 py-3 text-left font-bold">ยอดขาย</th>
                             <th class="px-4 py-3 text-left font-bold">สถานะ</th>
                             <th class="px-4 py-3 text-left font-bold">ช่องทาง</th>
-                            <th class="px-4 py-3 text-center font-bold">ดูรายละเอียด</th>
+                            <th id="history-details-col" class="px-4 py-3 text-center font-bold">ดูรายละเอียด</th>
                         </tr>
                     </thead>
                     <tbody id="history-list" class="divide-y divide-gray-100">
@@ -343,20 +429,20 @@
 <!-- ✅ Modal เพิ่มโต๊ะ -->
 <dialog id="add-table-modal" class="modal">
     <div class="modal-box bg-white rounded-3xl max-w-sm">
-        <h3 class="font-bold text-lg text-neutral mb-4">➕ เพิ่มโต๊ะใหม่</h3>
+        <h3 id="add-table-modal-title" class="font-bold text-lg text-neutral mb-4">➕ เพิ่มโต๊ะใหม่</h3>
         <div class="space-y-4">
             <div>
-                <label class="text-sm font-bold text-gray-600">เบอร์โต๊ะ</label>
+                <label id="label-new-table-id" class="text-sm font-bold text-gray-600">เบอร์โต๊ะ</label>
                 <input id="new-table-id" type="text" placeholder="01, 02, 03..." class="input input-bordered w-full rounded-xl mt-2" />
             </div>
             <div>
-                <label class="text-sm font-bold text-gray-600">ความจุ (คน)</label>
+                <label id="label-new-table-capacity" class="text-sm font-bold text-gray-600">ความจุ (คน)</label>
                 <input id="new-table-capacity" type="number" value="4" class="input input-bordered w-full rounded-xl mt-2" />
             </div>
         </div>
         <div class="modal-action mt-6">
-            <button onclick="document.getElementById('add-table-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
-            <button onclick="addNewTable()" class="btn bg-hf-green border-none text-white rounded-xl">บันทึก</button>
+            <button id="btn-cancel-add-table" onclick="document.getElementById('add-table-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
+            <button id="btn-save-add-table" onclick="addNewTable()" class="btn bg-hf-green border-none text-white rounded-xl">บันทึก</button>
         </div>
     </div>
 </dialog>
@@ -369,7 +455,7 @@
             <!-- render จาก JS -->
         </div>
         <div class="modal-action mt-6">
-            <button onclick="document.getElementById('status-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
+            <button id="btn-cancel-status-modal" onclick="document.getElementById('status-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
         </div>
     </div>
 </dialog>
@@ -377,39 +463,97 @@
 <!-- ✅ Modal เพิ่มเมนู -->
 <dialog id="add-menu-modal" class="modal">
     <div class="modal-box bg-white rounded-3xl max-w-md">
-        <h3 class="font-bold text-lg text-neutral mb-4">➕ เพิ่มเมนูใหม่</h3>
+        <h3 id="add-menu-modal-title" class="font-bold text-lg text-neutral mb-4">➕ เพิ่มเมนูใหม่</h3>
         <div class="space-y-4">
             <div>
-                <label class="text-sm font-bold text-gray-600">ชื่อเมนู (ไทย)</label>
+                <label id="label-new-menu-name-th" class="text-sm font-bold text-gray-600">ชื่อเมนู (ไทย)</label>
                 <input id="new-menu-name-th" type="text" class="input input-bordered w-full rounded-xl mt-2" />
             </div>
             <div>
-                <label class="text-sm font-bold text-gray-600">ชื่อเมนู (English)</label>
+                <label id="label-new-menu-name-en" class="text-sm font-bold text-gray-600">ชื่อเมนู (English)</label>
                 <input id="new-menu-name-en" type="text" class="input input-bordered w-full rounded-xl mt-2" />
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="text-sm font-bold text-gray-600">หมวดหมู่</label>
+                    <label id="label-new-menu-category" class="text-sm font-bold text-gray-600">หมวดหมู่</label>
                     <select id="new-menu-category" class="select select-bordered w-full rounded-xl mt-2">
-                        <option value="rice">จานเดียว</option>
-                        <option value="noodle">อาหารเส้น</option>
-                        <option value="drink">เครื่องดื่ม</option>
-                        <option value="dessert">ของหวาน</option>
+                        <option id="new-menu-category-rice" value="rice">จานเดียว</option>
+                        <option id="new-menu-category-noodle" value="noodle">อาหารเส้น</option>
+                        <option id="new-menu-category-drink" value="drink">เครื่องดื่ม</option>
+                        <option id="new-menu-category-dessert" value="dessert">ของหวาน</option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-sm font-bold text-gray-600">ราคา</label>
+                    <label id="label-new-menu-price" class="text-sm font-bold text-gray-600">ราคา</label>
                     <input id="new-menu-price" type="number" class="input input-bordered w-full rounded-xl mt-2" />
                 </div>
             </div>
             <div>
-                <label class="text-sm font-bold text-gray-600">Emoji</label>
+                <label id="label-new-menu-emoji" class="text-sm font-bold text-gray-600">Emoji</label>
                 <input id="new-menu-emoji" type="text" value="🍽️" class="input input-bordered w-full rounded-xl mt-2" />
+            </div>
+            <div>
+                <label id="label-new-menu-image-url" class="text-sm font-bold text-gray-600">Image URL / Path</label>
+                <input id="new-menu-image-url" type="text" class="input input-bordered w-full rounded-xl mt-2" placeholder="/images/menu/example.jpg" />
             </div>
         </div>
         <div class="modal-action mt-6">
-            <button onclick="document.getElementById('add-menu-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
-            <button onclick="addNewMenu()" class="btn bg-hf-green border-none text-white rounded-xl">บันทึก</button>
+            <button id="btn-cancel-add-menu" onclick="document.getElementById('add-menu-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
+            <button id="btn-save-add-menu" onclick="addNewMenu()" class="btn bg-hf-green border-none text-white rounded-xl">บันทึก</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- ✅ Modal แก้ไขเมนู -->
+<dialog id="edit-menu-modal" class="modal">
+    <div class="modal-box bg-white rounded-3xl max-w-md">
+        <h3 id="edit-menu-modal-title" class="font-bold text-lg text-neutral mb-4">✏️ แก้ไขเมนู</h3>
+        <input id="edit-menu-id" type="hidden" />
+        <div class="space-y-4">
+            <div>
+                <label id="label-edit-menu-name-th" class="text-sm font-bold text-gray-600">ชื่อเมนู (ไทย)</label>
+                <input id="edit-menu-name-th" type="text" class="input input-bordered w-full rounded-xl mt-2" />
+            </div>
+            <div>
+                <label id="label-edit-menu-name-en" class="text-sm font-bold text-gray-600">ชื่อเมนู (English)</label>
+                <input id="edit-menu-name-en" type="text" class="input input-bordered w-full rounded-xl mt-2" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label id="label-edit-menu-category" class="text-sm font-bold text-gray-600">หมวดหมู่</label>
+                    <select id="edit-menu-category" class="select select-bordered w-full rounded-xl mt-2">
+                        <option id="edit-menu-category-rice" value="rice">จานเดียว</option>
+                        <option id="edit-menu-category-noodle" value="noodle">อาหารเส้น</option>
+                        <option id="edit-menu-category-drink" value="drink">เครื่องดื่ม</option>
+                        <option id="edit-menu-category-dessert" value="dessert">ของหวาน</option>
+                    </select>
+                </div>
+                <div>
+                    <label id="label-edit-menu-price" class="text-sm font-bold text-gray-600">ราคา</label>
+                    <input id="edit-menu-price" type="number" class="input input-bordered w-full rounded-xl mt-2" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label id="label-edit-menu-emoji" class="text-sm font-bold text-gray-600">Emoji</label>
+                    <input id="edit-menu-emoji" type="text" class="input input-bordered w-full rounded-xl mt-2" />
+                </div>
+                <div>
+                    <label id="label-edit-menu-available" class="text-sm font-bold text-gray-600">สถานะ</label>
+                    <select id="edit-menu-available" class="select select-bordered w-full rounded-xl mt-2">
+                        <option id="edit-menu-available-true" value="1">พร้อมขาย</option>
+                        <option id="edit-menu-available-false" value="0">ปิดเมนู</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label id="label-edit-menu-image-url" class="text-sm font-bold text-gray-600">Image URL / Path</label>
+                <input id="edit-menu-image-url" type="text" class="input input-bordered w-full rounded-xl mt-2" placeholder="/images/menu/example.jpg" />
+            </div>
+        </div>
+        <div class="modal-action mt-6">
+            <button id="btn-cancel-edit-menu" onclick="document.getElementById('edit-menu-modal').close()" class="btn btn-ghost rounded-xl">ยกเลิก</button>
+            <button id="btn-save-edit-menu" onclick="saveMenuEdit()" class="btn bg-hf-green border-none text-white rounded-xl">บันทึก</button>
         </div>
     </div>
 </dialog>
@@ -417,12 +561,12 @@
 <!-- ✅ Modal ดูรายละเอียดออเดอร์ -->
 <dialog id="order-detail-modal" class="modal">
     <div class="modal-box bg-white rounded-3xl max-w-2xl">
-        <h3 class="font-bold text-lg text-neutral mb-4">📋 รายละเอียดออเดอร์</h3>
+        <h3 id="order-detail-modal-title" class="font-bold text-lg text-neutral mb-4">📋 รายละเอียดออเดอร์</h3>
         <div class="space-y-4" id="order-detail-content">
             <!-- render จาก JS -->
         </div>
         <div class="modal-action mt-6">
-            <button onclick="document.getElementById('order-detail-modal').close()" class="btn rounded-xl">ปิด</button>
+            <button id="btn-close-order-detail" onclick="document.getElementById('order-detail-modal').close()" class="btn rounded-xl">ปิด</button>
         </div>
     </div>
 </dialog>
@@ -430,9 +574,305 @@
 <script>
 let allTables = {};
 let allMenus = [];
+let allOrders = [];
+let allSales = [];
+let allReviews = [];
 let selectedTableId = null;
 let currentPage = 'dashboard';
 let allInvites = [];
+let salesChartInstance = null;
+let currentLang = localStorage.getItem('adminLang') || 'th';
+
+const i18n = {
+    th: {
+        sidebarSubtitle: 'แดชบอร์ดผู้ดูแลระบบ',
+        navDashboard: 'แดชบอร์ด',
+        navTables: 'จัดการโต๊ะ',
+        navMenu: 'จัดการเมนู',
+        navSales: 'ยอดขาย',
+        navUsers: 'ผู้ใช้งาน',
+        navReviews: 'รีวิวลูกค้า',
+        navHistory: 'ประวัติ',
+        logout: 'ออกจากระบบ',
+        pageTitles: {
+            dashboard: { title: 'แดชบอร์ด', subtitle: 'ยินดีต้อนรับผู้ดูแลระบบ' },
+            tables: { title: 'จัดการโต๊ะ', subtitle: 'สถานะโต๊ะทั้งหมด' },
+            menu: { title: 'จัดการเมนู', subtitle: 'จัดการรายการอาหาร' },
+            sales: { title: 'ยอดขาย', subtitle: 'รายงานยอดขาย' },
+            users: { title: 'ผู้ใช้งาน', subtitle: 'จัดการผู้ใช้งานระบบ' },
+            reviews: { title: 'รีวิวลูกค้า', subtitle: 'ดูคะแนนและความคิดเห็นทั้งหมด' },
+            history: { title: 'ประวัติ', subtitle: 'ประวัติการสั่งซื้อทั้งหมด' }
+        },
+        dashboardFilterTitle: '📅 ตัวกรองแดชบอร์ด',
+        dashboardFilterSubtitle: 'กรองข้อมูลจำนวนลูกค้า ยอดขาย รีวิว และเมนูยอดนิยมตามช่วงวันที่',
+        updateData: 'อัปเดตข้อมูล',
+        to: 'ถึง',
+        statVacant: 'โต๊ะว่าง',
+        statOccupied: 'โต๊ะใช้งาน',
+        statCleaning: 'โต๊ะจัดเตรียม',
+        statSalesRange: 'ยอดขายตามช่วงวันที่',
+        statCustomers: 'จำนวนลูกค้า',
+        statAvgRating: 'คะแนนเฉลี่ย',
+        statTopMenu: 'เมนูยอดนิยม',
+        statReviewCount: 'รีวิวทั้งหมด',
+        chartTitle: '📈 ยอดขายตามช่วงวันที่',
+        paymentMethodsTitle: '💳 ช่องทางชำระเงิน',
+        activeOrdersTitle: '🔥 ออเดอร์ที่กำลังใช้งาน',
+        addTable: '+ เพิ่มโต๊ะ',
+        tableStatusTitle: '📊 สถานะโต๊ะทั้งหมด',
+        tableCol: 'โต๊ะ',
+        capacityCol: 'ความจุ',
+        statusCol: 'สถานะ',
+        orderCol: 'ออเดอร์',
+        updatedCol: 'อัปเดต',
+        actionsCol: 'จัดการ',
+        addMenu: '+ เพิ่มเมนู',
+        menuManageTitle: '🍽️ จัดการเมนูอาหาร',
+        menuCol: 'เมนู',
+        categoryCol: 'หมวดหมู่',
+        priceCol: 'ราคา',
+        imageCol: 'รูปภาพ',
+        salesTitle: '💰 ยอดขายทั้งหมด',
+        dateCol: 'วันที่',
+        salesCol: 'ยอดขาย',
+        channelCol: 'ช่องทาง',
+        usersTitle: 'ผู้ใช้งาน',
+        createCookIdTitle: '🍳 สร้าง Cook ID',
+        createCookIdSubtitle: 'สร้างรหัสให้เชฟนำไปสมัครบัญชีได้ทันที',
+        randomCode: 'สุ่มรหัส',
+        usable: 'ใช้งานได้',
+        usedDisabled: 'ถูกใช้/ปิดแล้ว',
+        inviteListTitle: '🪪 รายการ Cook ID',
+        inviteListSubtitle: 'คัดลอกส่งให้เชฟ หรือลบสิทธิ์เมื่อไม่ต้องการใช้งานแล้ว',
+        refresh: 'รีเฟรช',
+        cookIdCol: 'Cook ID',
+        createdAtCol: 'สร้างเมื่อ',
+        usersSectionTitle: '👥 ผู้ใช้งาน',
+        reviewsPageTitle: '⭐ รีวิวและคะแนนจากลูกค้า',
+        reviewsPageSubtitle: 'ดูความคิดเห็นทั้งหมดพร้อมกรองช่วงวันที่และจำนวนดาว',
+        allRatings: 'ทุกคะแนน',
+        avgScore: 'คะแนนเฉลี่ย',
+        positiveReviews: 'รีวิวเชิงบวก (4-5)',
+        followupReviews: 'รีวิวต้องติดตาม (1-2)',
+        historyTitle: '📋 ประวัติทั้งหมด',
+        export: '📥 ส่งออก',
+        totalRecords: 'รวมทั้งสิ้น',
+        totalSales: 'ยอดขายรวม',
+        totalOrders: 'จำนวนออเดอร์',
+        avgPerOrder: 'เฉลี่ยต่อออเดอร์',
+        itemsCol: 'สินค้า',
+        detailsCol: 'ดูรายละเอียด',
+        addTableModal: '➕ เพิ่มโต๊ะใหม่',
+        tableNumber: 'เบอร์โต๊ะ',
+        capacityPeople: 'ความจุ (คน)',
+        tableNumberPlaceholder: 'เช่น 01, 02, 03...',
+        cancel: 'ยกเลิก',
+        save: 'บันทึก',
+        changeTableStatus: 'เปลี่ยนสถานะโต๊ะ',
+        addMenuModal: '➕ เพิ่มเมนูใหม่',
+        menuNameTh: 'ชื่อเมนู (ไทย)',
+        menuNameEn: 'ชื่อเมนู (English)',
+        category: 'หมวดหมู่',
+        price: 'ราคา',
+        emoji: 'Emoji',
+        imageUrl: 'Image URL / Path',
+        cookIdPlaceholder: 'เช่น CK-482931',
+        categoryRice: 'จานเดียว',
+        categoryNoodle: 'อาหารเส้น',
+        categoryDrink: 'เครื่องดื่ม',
+        categoryDessert: 'ของหวาน',
+        editMenuModal: '✏️ แก้ไขเมนู',
+        menuStatus: 'สถานะ',
+        available: 'พร้อมขาย',
+        unavailable: 'ปิดเมนู',
+        orderDetailTitle: '📋 รายละเอียดออเดอร์',
+        close: 'ปิด',
+        noPaymentData: 'ไม่มีข้อมูลการชำระเงินในช่วงนี้',
+        noOrders: 'ไม่มีออเดอร์',
+        noReviews: 'ไม่มีรีวิวในช่วงวันที่หรือคะแนนที่เลือก',
+        noComment: 'ลูกค้าให้คะแนนโดยไม่ได้เขียนข้อความเพิ่มเติม',
+        orderShort: 'Order',
+        itemsCount: 'รายการ',
+        statusPending: '⏳ รอปรุง',
+        statusCooking: '🍳 กำลังปรุง',
+        statusServing: '🍽️ เสิร์ฟแล้ว',
+        statusPaid: '✅ ชำระแล้ว',
+        statusCancelled: '❌ ยกเลิก',
+        pendingPayment: '❌ รอชำระ',
+        paid: '✅ ชำระแล้ว',
+        cash: '💵 เงินสด',
+        card: '💳 บัตร',
+        promptpay: '🏦 พร้อมเพย์',
+        unknown: '❔ ไม่ระบุ',
+        roleAdmin: '👨‍💼 Admin',
+        roleChef: '👨‍🍳 เชฟ',
+        active: 'ใช้งาน',
+        inactive: 'ปิด',
+        ready: 'พร้อม',
+        soldOut: 'หมด',
+        hasImage: 'มีรูป',
+        edit: 'แก้ไข',
+        enable: 'เปิด',
+        disable: 'ปิด',
+        delete: 'ลบ',
+        copy: 'คัดลอก',
+        disableCode: 'ปิดรหัส',
+        disabledAlready: 'ปิดแล้ว',
+        readyToUse: 'พร้อมใช้',
+        usedAlready: 'ถูกใช้แล้ว',
+        noCookId: 'ยังไม่มี Cook ID',
+        inviteLoadFail: 'โหลด Cook ID ไม่สำเร็จ',
+        dashboardLoadingError: 'โหลดข้อมูลไม่สำเร็จ',
+        success: 'สำเร็จ',
+        error: 'เกิดข้อผิดพลาด'
+    },
+    en: {
+        sidebarSubtitle: 'Admin Dashboard',
+        navDashboard: 'Dashboard',
+        navTables: 'Tables',
+        navMenu: 'Menus',
+        navSales: 'Sales',
+        navUsers: 'Users',
+        navReviews: 'Customer Reviews',
+        navHistory: 'History',
+        logout: 'Logout',
+        pageTitles: {
+            dashboard: { title: 'Dashboard', subtitle: 'Welcome, Admin' },
+            tables: { title: 'Table Management', subtitle: 'Restaurant table overview' },
+            menu: { title: 'Menu Management', subtitle: 'Manage food and drink items' },
+            sales: { title: 'Sales', subtitle: 'Sales report' },
+            users: { title: 'Users', subtitle: 'Manage system users' },
+            reviews: { title: 'Customer Reviews', subtitle: 'View ratings and feedback' },
+            history: { title: 'History', subtitle: 'Complete order history' }
+        },
+        dashboardFilterTitle: '📅 Dashboard Filter',
+        dashboardFilterSubtitle: 'Filter customers, sales, reviews, and top menu by date range',
+        updateData: 'Update Data',
+        to: 'to',
+        statVacant: 'Vacant Tables',
+        statOccupied: 'Occupied Tables',
+        statCleaning: 'Cleaning Tables',
+        statSalesRange: 'Sales in Range',
+        statCustomers: 'Customers',
+        statAvgRating: 'Average Rating',
+        statTopMenu: 'Top Menu',
+        statReviewCount: 'Total Reviews',
+        chartTitle: '📈 Sales by Date Range',
+        paymentMethodsTitle: '💳 Payment Methods',
+        activeOrdersTitle: '🔥 Active Orders',
+        addTable: '+ Add Table',
+        tableStatusTitle: '📊 Table Status Overview',
+        tableCol: 'Table',
+        capacityCol: 'Capacity',
+        statusCol: 'Status',
+        orderCol: 'Order',
+        updatedCol: 'Updated',
+        actionsCol: 'Actions',
+        addMenu: '+ Add Menu',
+        menuManageTitle: '🍽️ Menu Management',
+        menuCol: 'Menu',
+        categoryCol: 'Category',
+        priceCol: 'Price',
+        imageCol: 'Image',
+        salesTitle: '💰 All Sales',
+        dateCol: 'Date',
+        salesCol: 'Amount',
+        channelCol: 'Channel',
+        usersTitle: 'Users',
+        createCookIdTitle: '🍳 Create Cook ID',
+        createCookIdSubtitle: 'Generate codes for chefs to register instantly',
+        randomCode: 'Randomize',
+        usable: 'Available',
+        usedDisabled: 'Used/Disabled',
+        inviteListTitle: '🪪 Cook ID List',
+        inviteListSubtitle: 'Copy and share with chefs or disable when no longer needed',
+        refresh: 'Refresh',
+        cookIdCol: 'Cook ID',
+        createdAtCol: 'Created At',
+        usersSectionTitle: '👥 Users',
+        reviewsPageTitle: '⭐ Customer Ratings & Reviews',
+        reviewsPageSubtitle: 'Browse all reviews with date and star filters',
+        allRatings: 'All Ratings',
+        avgScore: 'Average Score',
+        positiveReviews: 'Positive Reviews (4-5)',
+        followupReviews: 'Follow-up Needed (1-2)',
+        historyTitle: '📋 Full History',
+        export: '📥 Export',
+        totalRecords: 'Total Records',
+        totalSales: 'Total Sales',
+        totalOrders: 'Orders',
+        avgPerOrder: 'Average per Order',
+        itemsCol: 'Items',
+        detailsCol: 'Details',
+        addTableModal: '➕ Add New Table',
+        tableNumber: 'Table Number',
+        capacityPeople: 'Capacity (People)',
+        tableNumberPlaceholder: 'e.g. 01, 02, 03...',
+        cancel: 'Cancel',
+        save: 'Save',
+        changeTableStatus: 'Change Table Status',
+        addMenuModal: '➕ Add New Menu',
+        menuNameTh: 'Menu Name (TH)',
+        menuNameEn: 'Menu Name (EN)',
+        category: 'Category',
+        price: 'Price',
+        emoji: 'Emoji',
+        imageUrl: 'Image URL / Path',
+        cookIdPlaceholder: 'e.g. CK-482931',
+        categoryRice: 'Main Course',
+        categoryNoodle: 'Noodles',
+        categoryDrink: 'Drinks',
+        categoryDessert: 'Desserts',
+        editMenuModal: '✏️ Edit Menu',
+        menuStatus: 'Status',
+        available: 'Available',
+        unavailable: 'Unavailable',
+        orderDetailTitle: '📋 Order Details',
+        close: 'Close',
+        noPaymentData: 'No payment data in this date range',
+        noOrders: 'No active orders',
+        noReviews: 'No reviews for the selected dates or rating',
+        noComment: 'Customer left a rating without additional comments',
+        orderShort: 'Order',
+        itemsCount: 'items',
+        statusPending: '⏳ Pending',
+        statusCooking: '🍳 Cooking',
+        statusServing: '🍽️ Served',
+        statusPaid: '✅ Paid',
+        statusCancelled: '❌ Cancelled',
+        pendingPayment: '❌ Pending Payment',
+        paid: '✅ Paid',
+        cash: '💵 Cash',
+        card: '💳 Card',
+        promptpay: '🏦 PromptPay',
+        unknown: '❔ Unknown',
+        roleAdmin: '👨‍💼 Admin',
+        roleChef: '👨‍🍳 Chef',
+        active: 'Active',
+        inactive: 'Disabled',
+        ready: 'Available',
+        soldOut: 'Unavailable',
+        hasImage: 'Has image',
+        edit: 'Edit',
+        enable: 'Enable',
+        disable: 'Disable',
+        delete: 'Delete',
+        copy: 'Copy',
+        disableCode: 'Disable Code',
+        disabledAlready: 'Disabled',
+        readyToUse: 'Ready',
+        usedAlready: 'Used',
+        noCookId: 'No Cook IDs yet',
+        inviteLoadFail: 'Failed to load Cook IDs',
+        dashboardLoadingError: 'Failed to load dashboard data',
+        success: 'Success',
+        error: 'Error'
+    }
+};
+
+function tr(key) {
+    return i18n[currentLang][key] ?? key;
+}
 
 // ============================================================
 // PAGE MANAGEMENT
@@ -447,23 +887,201 @@ function showPage(page) {
     
     currentPage = page;
     
-    const titles = {
-        dashboard: { title: 'Dashboard', subtitle: 'ยินดีต้อนรับ Admin' },
-        tables: { title: 'จัดการโต๊ะ', subtitle: 'สถานะโต๊ะทั้งหมด' },
-        menu: { title: 'จัดการเมนู', subtitle: 'จัดการรายการอาหาร' },
-        sales: { title: 'ยอดขาย', subtitle: 'รายงานยอดขาย' },
-        users: { title: 'ผู้ใช้งาน', subtitle: 'จัดการผู้ใช้งานระบบ' },
-        history: { title: 'ประวัติ', subtitle: 'ประวัติการสั่งซื้อทั้งหมด' }
-    };
+    const titleConfig = i18n[currentLang].pageTitles[page];
+    document.getElementById('page-title').innerText = titleConfig.title;
+    document.getElementById('page-subtitle').innerText = titleConfig.subtitle;
     
-    document.getElementById('page-title').innerText = titles[page].title;
-    document.getElementById('page-subtitle').innerText = titles[page].subtitle;
-    
-    if (page === 'tables') loadTables();
+    if (page === 'dashboard') loadDashboard();
+    else if (page === 'tables') loadTables();
     else if (page === 'menu') loadMenus();
     else if (page === 'sales') loadSales();
     else if (page === 'users') loadUsers();
+    else if (page === 'reviews') loadReviewsPage();
     else if (page === 'history') loadHistory();
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('adminLang', lang);
+    document.documentElement.lang = lang;
+    document.getElementById('btn-lang-th').className = `btn btn-xs md:btn-sm join-item border-none font-bold ${lang === 'th' ? 'bg-hf-green-light' : 'bg-transparent'}`;
+    document.getElementById('btn-lang-en').className = `btn btn-xs md:btn-sm join-item border-none font-bold ${lang === 'en' ? 'bg-hf-green-light' : 'bg-transparent'}`;
+    updateStaticTexts();
+    showPage(currentPage);
+}
+
+function updateStaticTexts() {
+    const navLabels = {
+        'nav-dashboard': tr('navDashboard'),
+        'nav-tables': tr('navTables'),
+        'nav-menu': tr('navMenu'),
+        'nav-sales': tr('navSales'),
+        'nav-users': tr('navUsers'),
+        'nav-reviews': tr('navReviews'),
+        'nav-history': tr('navHistory')
+    };
+
+    Object.entries(navLabels).forEach(([id, label]) => {
+        const el = document.getElementById(id);
+        if (el) {
+            const icon = el.querySelector('span');
+            el.innerHTML = `${icon ? icon.outerHTML : ''} ${label}`;
+        }
+    });
+
+    document.querySelector('.sidebar .text-xs.text-gray-400.mt-2').innerText = tr('sidebarSubtitle');
+    document.querySelector('.sidebar .btn').innerText = tr('logout');
+
+    const titleConfig = i18n[currentLang].pageTitles[currentPage];
+    document.getElementById('page-title').innerText = titleConfig.title;
+    document.getElementById('page-subtitle').innerText = titleConfig.subtitle;
+
+    const statLabels = [
+        ['stat-vacant', tr('statVacant')],
+        ['stat-occupied', tr('statOccupied')],
+        ['stat-cleaning', tr('statCleaning')],
+        ['stat-sales-today', tr('statSalesRange')],
+        ['stat-customers', tr('statCustomers')],
+        ['stat-avg-rating', tr('statAvgRating')],
+        ['stat-top-menu', tr('statTopMenu')],
+        ['stat-review-count', tr('statReviewCount')]
+    ];
+    statLabels.forEach(([id, label]) => {
+        const el = document.getElementById(id);
+        if (el?.previousElementSibling) el.previousElementSibling.innerText = label;
+    });
+
+    const headerRows = {
+        '#page-tables thead th': [tr('tableCol'), tr('capacityCol'), tr('statusCol'), tr('orderCol'), tr('updatedCol'), tr('actionsCol')],
+        '#page-menu thead th': [tr('menuCol'), tr('categoryCol'), tr('priceCol'), tr('statusCol'), tr('imageCol'), tr('actionsCol')],
+        '#page-sales thead th': [tr('dateCol'), tr('tableCol'), tr('salesCol'), tr('channelCol')],
+        '#page-users .xl\\:col-span-1 h3': [tr('createCookIdTitle')],
+        '#page-users .xl\\:col-span-2 h3': [tr('inviteListTitle')],
+        '#page-users .bg-white.rounded-2xl.shadow-sm.border.border-gray-100.p-6 h3.text-xl.font-bold.text-neutral.mb-6': [tr('usersSectionTitle')],
+        '#page-history thead th': [tr('dateCol'), tr('tableCol'), tr('orderCol'), tr('itemsCol'), tr('salesCol'), tr('statusCol'), tr('channelCol'), tr('detailsCol')]
+    };
+
+    Object.entries(headerRows).forEach(([selector, labels]) => {
+        const nodes = document.querySelectorAll(selector);
+        labels.forEach((label, index) => {
+            if (nodes[index]) nodes[index].innerText = label;
+        });
+    });
+
+    const sectionTitles = [
+        ['#page-tables h3.text-xl', tr('tableStatusTitle')],
+        ['#page-menu h3.text-xl', tr('menuManageTitle')],
+        ['#page-sales h3.text-xl', tr('salesTitle')],
+        ['#page-reviews h3.text-xl', tr('reviewsPageTitle')],
+        ['#page-history h3.text-xl', tr('historyTitle')]
+    ];
+    sectionTitles.forEach(([selector, text]) => {
+        const el = document.querySelector(selector);
+        if (el) el.innerText = text;
+    });
+
+    const byId = {
+        'btn-add-table': tr('addTable'),
+        'btn-add-menu': tr('addMenu'),
+        'cookid-create-title': tr('createCookIdTitle'),
+        'cookid-create-subtitle': tr('createCookIdSubtitle'),
+        'btn-random-cookid': tr('randomCode'),
+        'btn-create-cookid': currentLang === 'en' ? 'Create' : 'สร้าง',
+        'label-new-table-id': tr('tableNumber'),
+        'label-new-table-capacity': tr('capacityPeople'),
+        'cookid-list-title': tr('inviteListTitle'),
+        'cookid-list-subtitle': tr('inviteListSubtitle'),
+        'btn-refresh-invites': tr('refresh'),
+        'invite-created-col': tr('createdAtCol'),
+        'users-section-title': tr('usersSectionTitle'),
+        'reviews-section-title': tr('reviewsPageTitle'),
+        'reviews-section-subtitle': tr('reviewsPageSubtitle'),
+        'reviews-date-separator': tr('to'),
+        'btn-refresh-reviews': tr('refresh'),
+        'review-avg-label': tr('avgScore'),
+        'review-positive-label': tr('positiveReviews'),
+        'review-negative-label': tr('followupReviews'),
+        'dashboard-filter-title': tr('dashboardFilterTitle'),
+        'dashboard-filter-subtitle': tr('dashboardFilterSubtitle'),
+        'dashboard-filter-button': tr('updateData'),
+        'dashboard-date-separator': tr('to'),
+        'dashboard-chart-title': tr('chartTitle'),
+        'dashboard-payment-title': tr('paymentMethodsTitle'),
+        'dashboard-active-orders-title': tr('activeOrdersTitle'),
+        'history-section-title': tr('historyTitle'),
+        'history-date-separator': tr('to'),
+        'btn-export-history': tr('export'),
+        'history-total-records-label': tr('totalRecords'),
+        'history-total-sales-label': tr('totalSales'),
+        'history-total-orders-label': tr('totalOrders'),
+        'history-avg-per-order-label': tr('avgPerOrder'),
+        'history-details-col': tr('detailsCol'),
+        'add-table-modal-title': tr('addTableModal'),
+        'btn-cancel-add-table': tr('cancel'),
+        'btn-save-add-table': tr('save'),
+        'btn-cancel-status-modal': tr('cancel'),
+        'add-menu-modal-title': tr('addMenuModal'),
+        'label-new-menu-name-th': tr('menuNameTh'),
+        'label-new-menu-name-en': tr('menuNameEn'),
+        'label-new-menu-category': tr('category'),
+        'label-new-menu-price': tr('price'),
+        'label-new-menu-emoji': tr('emoji'),
+        'label-new-menu-image-url': tr('imageUrl'),
+        'new-menu-category-rice': tr('categoryRice'),
+        'new-menu-category-noodle': tr('categoryNoodle'),
+        'new-menu-category-drink': tr('categoryDrink'),
+        'new-menu-category-dessert': tr('categoryDessert'),
+        'btn-cancel-add-menu': tr('cancel'),
+        'btn-save-add-menu': tr('save'),
+        'edit-menu-modal-title': tr('editMenuModal'),
+        'label-edit-menu-name-th': tr('menuNameTh'),
+        'label-edit-menu-name-en': tr('menuNameEn'),
+        'label-edit-menu-category': tr('category'),
+        'label-edit-menu-price': tr('price'),
+        'label-edit-menu-emoji': tr('emoji'),
+        'label-edit-menu-available': tr('menuStatus'),
+        'label-edit-menu-image-url': tr('imageUrl'),
+        'edit-menu-category-rice': tr('categoryRice'),
+        'edit-menu-category-noodle': tr('categoryNoodle'),
+        'edit-menu-category-drink': tr('categoryDrink'),
+        'edit-menu-category-dessert': tr('categoryDessert'),
+        'edit-menu-available-true': tr('available'),
+        'edit-menu-available-false': tr('unavailable'),
+        'btn-cancel-edit-menu': tr('cancel'),
+        'btn-save-edit-menu': tr('save'),
+        'order-detail-modal-title': tr('orderDetailTitle'),
+        'btn-close-order-detail': tr('close')
+    };
+    Object.entries(byId).forEach(([id, text]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+    });
+
+    const placeholders = {
+        'new-cook-id': tr('cookIdPlaceholder'),
+        'new-table-id': tr('tableNumberPlaceholder')
+    };
+    Object.entries(placeholders).forEach(([id, text]) => {
+        const el = document.getElementById(id);
+        if (el) el.placeholder = text;
+    });
+
+    const reviewRatingFilter = document.getElementById('review-rating-filter');
+    if (reviewRatingFilter) {
+        const optionLabels = {
+            all: tr('allRatings'),
+            5: currentLang === 'en' ? '5 Stars' : '5 ดาว',
+            4: currentLang === 'en' ? '4 Stars' : '4 ดาว',
+            3: currentLang === 'en' ? '3 Stars' : '3 ดาว',
+            2: currentLang === 'en' ? '2 Stars' : '2 ดาว',
+            1: currentLang === 'en' ? '1 Star' : '1 ดาว'
+        };
+        Array.from(reviewRatingFilter.options).forEach(option => {
+            if (optionLabels[option.value] !== undefined) {
+                option.text = optionLabels[option.value];
+            }
+        });
+    }
 }
 
 // ============================================================
@@ -473,11 +1091,22 @@ function showPage(page) {
 async function loadDashboard() {
     try {
         console.log("📊 Loading dashboard...");
-        const [tables, orders, sales] = await Promise.all([
+        const [tables, orders, sales, reviews, activeOrders] = await Promise.all([
             fetch('/tables').then(r => r.json()),
-            fetch('/orders/active').then(r => r.json()),
-            fetch('/sales/today').then(r => r.json())
+            fetch('/orders').then(r => r.json()),
+            fetch('/sales').then(r => r.json()),
+            fetch('/reviews').then(r => r.json()),
+            fetch('/orders/active').then(r => r.json())
         ]);
+
+        allOrders = Array.isArray(orders) ? orders : [];
+        allSales = Array.isArray(sales) ? sales : [];
+        allReviews = Array.isArray(reviews) ? reviews : [];
+
+        const { startDate, endDate } = getDashboardDateRange();
+        const filteredOrders = allOrders.filter(o => isDateInRange(o.createdAt, startDate, endDate));
+        const filteredSales = allSales.filter(s => isDateInRange(s.created_at || s.createdAt, startDate, endDate));
+        const filteredReviews = allReviews.filter(r => isDateInRange(r.createdAt || r.created_at, startDate, endDate));
 
         let vacant = 0, occupied = 0, cleaning = 0, totalSales = 0;
         
@@ -487,15 +1116,26 @@ async function loadDashboard() {
             else if (t.status === 'cleaning') cleaning++;
         });
 
-        sales.forEach(s => totalSales += parseFloat(s.total || 0));
+        filteredSales.forEach(s => totalSales += parseFloat(s.total || 0));
+        const uniqueCustomers = new Set(
+            filteredOrders.map(o => o.sessionId).filter(Boolean)
+        ).size;
+        const avgRating = filteredReviews.length
+            ? filteredReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / filteredReviews.length
+            : 0;
+        const topMenu = getTopMenuName(filteredOrders);
 
         document.getElementById('stat-vacant').innerText = vacant;
         document.getElementById('stat-occupied').innerText = occupied;
         document.getElementById('stat-cleaning').innerText = cleaning;
         document.getElementById('stat-sales-today').innerText = `฿${totalSales.toFixed(2)}`;
+        document.getElementById('stat-customers').innerText = uniqueCustomers;
+        document.getElementById('stat-avg-rating').innerText = avgRating.toFixed(1);
+        document.getElementById('stat-top-menu').innerText = topMenu || '-';
+        document.getElementById('stat-review-count').innerText = filteredReviews.length;
 
         // ✅ Active orders
-        const orderHtml = orders.slice(0, 5).map(o => `
+        const orderHtml = activeOrders.slice(0, 5).map(o => `
             <div class="flex justify-between items-center p-3 bg-hf-bg rounded-lg">
                 <div>
                     <p class="font-bold text-neutral">Order #${o.id.substring(0, 8)}</p>
@@ -508,10 +1148,130 @@ async function loadDashboard() {
             </div>
         `).join('');
         document.getElementById('active-orders').innerHTML = orderHtml || '<p class="text-gray-400">ไม่มีออเดอร์</p>';
+        renderPaymentMethods(filteredSales);
+        renderSalesChart(filteredSales, startDate, endDate);
 
     } catch (e) {
         console.error("❌ Dashboard error:", e);
     }
+}
+
+function getTodayDateString() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function getLocale() {
+    return currentLang === 'en' ? 'en-US' : 'th-TH';
+}
+
+function getDashboardDateRange() {
+    const startInput = document.getElementById('dashboard-date-start');
+    const endInput = document.getElementById('dashboard-date-end');
+    const today = getTodayDateString();
+    const startDate = startInput.value || today;
+    const endDate = endInput.value || today;
+    startInput.value = startDate;
+    endInput.value = endDate;
+    return { startDate, endDate };
+}
+
+function isDateInRange(value, startDate, endDate) {
+    if (!value) return false;
+    const datePart = new Date(value).toISOString().split('T')[0];
+    return datePart >= startDate && datePart <= endDate;
+}
+
+function getTopMenuName(orders) {
+    const counts = new Map();
+    orders.forEach(order => {
+        (order.items || []).forEach(item => {
+            const key = item.name || item.menu_name_th || '-';
+            counts.set(key, (counts.get(key) || 0) + Number(item.qty || 0));
+        });
+    });
+    const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
+    return top ? `${top[0]} (${top[1]})` : '';
+}
+
+function renderPaymentMethods(sales) {
+    const container = document.getElementById('payment-methods');
+    const summary = new Map();
+
+    sales.forEach(sale => {
+        const key = sale.payment_method || 'unknown';
+        const prev = summary.get(key) || { count: 0, total: 0 };
+        prev.count += 1;
+        prev.total += parseFloat(sale.total || 0);
+        summary.set(key, prev);
+    });
+
+    const labels = {
+        promptpay: tr('promptpay'),
+        card: tr('card'),
+        cash: tr('cash'),
+        unknown: tr('unknown')
+    };
+
+    const rows = Array.from(summary.entries()).sort((a, b) => b[1].total - a[1].total);
+    container.innerHTML = rows.length ? rows.map(([method, info]) => `
+        <div class="flex items-center justify-between bg-hf-bg rounded-xl px-4 py-3">
+            <div>
+                <p class="font-bold text-neutral">${labels[method] || method}</p>
+                <p class="text-xs text-gray-400">${info.count} รายการ</p>
+            </div>
+            <p class="font-bold text-hf-green">฿${info.total.toFixed(2)}</p>
+        </div>
+    `).join('') : `<p class="text-gray-400">${tr('noPaymentData')}</p>`;
+}
+
+function renderSalesChart(sales, startDate, endDate) {
+    const ctx = document.getElementById('salesChart');
+    if (!ctx) return;
+
+    const totals = new Map();
+    sales.forEach(sale => {
+        const day = new Date(sale.created_at || sale.createdAt).toISOString().split('T')[0];
+        totals.set(day, (totals.get(day) || 0) + parseFloat(sale.total || 0));
+    });
+
+    const labels = [];
+    const data = [];
+    const current = new Date(startDate);
+    const end = new Date(endDate);
+    while (current <= end) {
+        const key = current.toISOString().split('T')[0];
+        labels.push(key);
+        data.push(Number((totals.get(key) || 0).toFixed(2)));
+        current.setDate(current.getDate() + 1);
+    }
+
+    if (salesChartInstance) {
+        salesChartInstance.destroy();
+    }
+
+    salesChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: tr('salesTitle'),
+                data,
+                borderColor: '#A3B18A',
+                backgroundColor: 'rgba(163, 177, 138, 0.18)',
+                fill: true,
+                tension: 0.35
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function applyDashboardRange() {
+    loadDashboard();
 }
 
 // ============================================================
@@ -534,22 +1294,22 @@ function renderTables() {
 
     Object.entries(allTables).sort().forEach(([id, table]) => {
         const statusBadge = {
-            'vacant': '<span class="badge badge-success">ว่าง</span>',
-            'occupied': '<span class="badge badge-error">ใช้งาน</span>',
-            'cleaning': '<span class="badge badge-warning">จัดเตรียม</span>'
+            'vacant': `<span class="badge badge-success">${tr('available')}</span>`,
+            'occupied': `<span class="badge badge-error">${currentLang === 'en' ? 'Occupied' : 'ใช้งาน'}</span>`,
+            'cleaning': `<span class="badge badge-warning">${currentLang === 'en' ? 'Cleaning' : 'จัดเตรียม'}</span>`
         }[table.status] || '<span class="badge">-</span>';
 
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="px-4 py-3 font-bold">Table ${id}</td>
-            <td class="px-4 py-3">${table.capacity} คน</td>
+            <td class="px-4 py-3">${table.capacity} ${currentLang === 'en' ? 'seats' : 'คน'}</td>
             <td class="px-4 py-3">${statusBadge}</td>
             <td class="px-4 py-3 text-xs text-gray-500">${table.order_id || '-'}</td>
-            <td class="px-4 py-3 text-xs text-gray-500">${new Date(table.updated_at).toLocaleTimeString('th-TH')}</td>
+            <td class="px-4 py-3 text-xs text-gray-500">${new Date(table.updated_at).toLocaleTimeString(getLocale())}</td>
             <td class="px-4 py-3 text-center">
                 <div class="flex gap-2 justify-center">
-                    <button onclick="showStatusModal('${id}')" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">เปลี่ยน</button>
-                    <button onclick="forceReleaseTable('${id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">ปล่อย</button>
+                    <button onclick="showStatusModal('${id}')" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">${currentLang === 'en' ? 'Change' : 'เปลี่ยน'}</button>
+                    <button onclick="forceReleaseTable('${id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">${currentLang === 'en' ? 'Release' : 'ปล่อย'}</button>
                 </div>
             </td>
         `;
@@ -591,13 +1351,15 @@ async function addNewTable() {
 
 function showStatusModal(tableId) {
     selectedTableId = tableId;
-    document.getElementById('status-modal-title').innerText = `เปลี่ยนสถานะ Table ${tableId}`;
+    document.getElementById('status-modal-title').innerText = currentLang === 'en'
+        ? `Change Status for Table ${tableId}`
+        : `เปลี่ยนสถานะ Table ${tableId}`;
     
     const buttons = document.getElementById('status-buttons');
     buttons.innerHTML = `
-        <button onclick="changeTableStatus('vacant')" class="btn btn-block bg-green-100 text-green-700 border-none rounded-xl font-bold">✓ ว่าง (Vacant)</button>
-        <button onclick="changeTableStatus('occupied')" class="btn btn-block bg-red-100 text-red-700 border-none rounded-xl font-bold">⚠️ ใช้งาน (Occupied)</button>
-        <button onclick="changeTableStatus('cleaning')" class="btn btn-block bg-yellow-100 text-yellow-700 border-none rounded-xl font-bold">🧹 จัดเตรียม (Cleaning)</button>
+        <button onclick="changeTableStatus('vacant')" class="btn btn-block bg-green-100 text-green-700 border-none rounded-xl font-bold">✓ ${currentLang === 'en' ? 'Vacant' : 'ว่าง'} (Vacant)</button>
+        <button onclick="changeTableStatus('occupied')" class="btn btn-block bg-red-100 text-red-700 border-none rounded-xl font-bold">⚠️ ${currentLang === 'en' ? 'Occupied' : 'ใช้งาน'} (Occupied)</button>
+        <button onclick="changeTableStatus('cleaning')" class="btn btn-block bg-yellow-100 text-yellow-700 border-none rounded-xl font-bold">🧹 ${currentLang === 'en' ? 'Cleaning' : 'จัดเตรียม'} (Cleaning)</button>
     `;
     
     document.getElementById('status-modal').showModal();
@@ -671,8 +1433,8 @@ function renderMenus() {
 
     allMenus.forEach(menu => {
         const statusBadge = menu.available 
-            ? '<span class="badge badge-success">พร้อม</span>'
-            : '<span class="badge badge-error">หมด</span>';
+            ? `<span class="badge badge-success">${tr('ready')}</span>`
+            : `<span class="badge badge-error">${tr('soldOut')}</span>`;
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -680,12 +1442,14 @@ function renderMenus() {
             <td class="px-4 py-3 text-sm text-gray-600">${menu.category}</td>
             <td class="px-4 py-3 font-bold text-hf-green">฿${menu.price}</td>
             <td class="px-4 py-3">${statusBadge}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">${menu.image_url ? tr('hasImage') : '-'}</td>
             <td class="px-4 py-3 text-center">
                 <div class="flex gap-2 justify-center">
+                    <button onclick="showEditMenuModal('${menu.id}')" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">${tr('edit')}</button>
                     <button onclick="toggleMenuStatus('${menu.id}', ${!menu.available})" class="btn btn-xs btn-outline border-gray-300 rounded-lg">
-                        ${menu.available ? 'ปิด' : 'เปิด'}
+                        ${menu.available ? tr('disable') : tr('enable')}
                     </button>
-                    <button onclick="deleteMenu('${menu.id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">ลบ</button>
+                    <button onclick="deleteMenu('${menu.id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">${tr('delete')}</button>
                 </div>
             </td>
         `;
@@ -698,6 +1462,7 @@ function showAddMenuModal() {
     document.getElementById('new-menu-name-en').value = '';
     document.getElementById('new-menu-price').value = '';
     document.getElementById('new-menu-emoji').value = '🍽️';
+    document.getElementById('new-menu-image-url').value = '';
     document.getElementById('add-menu-modal').showModal();
 }
 
@@ -707,6 +1472,7 @@ async function addNewMenu() {
     const category = document.getElementById('new-menu-category').value;
     const price = parseFloat(document.getElementById('new-menu-price').value) || 0;
     const img = document.getElementById('new-menu-emoji').value || '🍽️';
+    const image_url = document.getElementById('new-menu-image-url').value.trim();
 
     if (!name_th || !price) {
         Swal.fire('ข้อผิดพลาด', 'กรุณากรอกข้อมูลให้ครบ', 'error');
@@ -717,13 +1483,60 @@ async function addNewMenu() {
         const res = await fetch('/menu', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, name_th, category, price, img })
+            body: JSON.stringify({ name, name_th, category, price, img, image_url })
         });
 
         if (!res.ok) throw new Error('ไม่สามารถเพิ่มเมนูได้');
 
         Swal.fire('สำเร็จ', 'เพิ่มเมนูใหม่แล้ว', 'success');
         document.getElementById('add-menu-modal').close();
+        await loadMenus();
+    } catch (e) {
+        Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+    }
+}
+
+function showEditMenuModal(menuId) {
+    const menu = allMenus.find(item => item.id === menuId);
+    if (!menu) return;
+
+    document.getElementById('edit-menu-id').value = menu.id;
+    document.getElementById('edit-menu-name-th').value = menu.name_th || '';
+    document.getElementById('edit-menu-name-en').value = menu.name || '';
+    document.getElementById('edit-menu-category').value = menu.category || 'rice';
+    document.getElementById('edit-menu-price').value = menu.price || 0;
+    document.getElementById('edit-menu-emoji').value = menu.img || '🍽️';
+    document.getElementById('edit-menu-image-url').value = menu.image_url || '';
+    document.getElementById('edit-menu-available').value = menu.available ? '1' : '0';
+    document.getElementById('edit-menu-modal').showModal();
+}
+
+async function saveMenuEdit() {
+    const id = document.getElementById('edit-menu-id').value;
+    const name_th = document.getElementById('edit-menu-name-th').value.trim();
+    const name = document.getElementById('edit-menu-name-en').value.trim();
+    const category = document.getElementById('edit-menu-category').value;
+    const price = parseFloat(document.getElementById('edit-menu-price').value) || 0;
+    const img = document.getElementById('edit-menu-emoji').value || '🍽️';
+    const image_url = document.getElementById('edit-menu-image-url').value.trim();
+    const available = document.getElementById('edit-menu-available').value === '1';
+
+    if (!id || !name_th || !price) {
+        Swal.fire('ข้อผิดพลาด', 'กรุณากรอกข้อมูลเมนูให้ครบ', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(`/menu/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name_th, name, category, price, img, image_url, available })
+        });
+
+        if (!res.ok) throw new Error('ไม่สามารถแก้ไขเมนูได้');
+
+        document.getElementById('edit-menu-modal').close();
+        Swal.fire('สำเร็จ', 'อัปเดตเมนูแล้ว', 'success');
         await loadMenus();
     } catch (e) {
         Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
@@ -790,20 +1603,89 @@ async function loadSales() {
     }
 }
 
+// ============================================================
+// REVIEWS
+// ============================================================
+
+async function loadReviewsPage() {
+    try {
+        console.log("⭐ Loading reviews...");
+        const reviews = await fetch('/reviews').then(r => r.json());
+        allReviews = Array.isArray(reviews) ? reviews : [];
+
+        const today = getTodayDateString();
+        const startInput = document.getElementById('review-date-start');
+        const endInput = document.getElementById('review-date-end');
+        const startDate = startInput.value || today;
+        const endDate = endInput.value || today;
+        const ratingFilter = document.getElementById('review-rating-filter').value;
+
+        startInput.value = startDate;
+        endInput.value = endDate;
+
+        const filtered = allReviews.filter(review => {
+            const inRange = isDateInRange(review.createdAt || review.created_at, startDate, endDate);
+            const matchRating = ratingFilter === 'all' ? true : Number(review.rating) === Number(ratingFilter);
+            return inRange && matchRating;
+        });
+
+        renderReviewsPage(filtered);
+    } catch (e) {
+        console.error("❌ Error loading reviews page:", e);
+        document.getElementById('reviews-admin-list').innerHTML = '<p class="text-red-500">โหลดรีวิวไม่สำเร็จ</p>';
+    }
+}
+
+function renderReviewsPage(reviews) {
+    const avg = reviews.length
+        ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
+        : 0;
+    const positive = reviews.filter(review => Number(review.rating) >= 4).length;
+    const negative = reviews.filter(review => Number(review.rating) <= 2).length;
+
+    document.getElementById('review-avg-rating').innerText = avg.toFixed(1);
+    document.getElementById('review-positive-count').innerText = positive;
+    document.getElementById('review-negative-count').innerText = negative;
+
+    const container = document.getElementById('reviews-admin-list');
+    if (!reviews.length) {
+        container.innerHTML = `<p class="text-gray-400">${tr('noReviews')}</p>`;
+        return;
+    }
+
+    container.innerHTML = reviews.map(review => `
+        <div class="border border-gray-100 rounded-2xl p-5 bg-hf-bg">
+            <div class="flex justify-between items-start gap-4 flex-wrap">
+                <div>
+                    <p class="font-bold text-neutral">Table ${review.tableId || '-'}</p>
+                    <p class="text-sm text-gray-500">Order: ${review.orderId || '-'}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-bold text-hf-green">${'★'.repeat(Number(review.rating || 0))}${'☆'.repeat(5 - Number(review.rating || 0))}</p>
+                    <p class="text-xs text-gray-500">${new Date(review.createdAt || review.created_at).toLocaleString(getLocale())}</p>
+                </div>
+            </div>
+            <div class="mt-4 text-sm text-gray-700 leading-7">
+                ${review.comment ? review.comment : `<span class="text-gray-400">${tr('noComment')}</span>`}
+            </div>
+        </div>
+    `).join('');
+}
+
 function renderSales(sales) {
     const tbody = document.getElementById('sales-list');
     tbody.innerHTML = '';
 
     sales.slice(0, 100).forEach(sale => {
         const paymentLabel = {
-            'promptpay': '🏦 PromptPay',
-            'card': '💳 บัตร',
-            'cash': '💵 เงินสด'
+            'promptpay': tr('promptpay'),
+            'card': tr('card'),
+            'cash': tr('cash')
         }[sale.payment_method] || '💰 ' + sale.payment_method;
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm">${new Date(sale.created_at).toLocaleString('th-TH')}</td>
+            <td class="px-4 py-3 text-sm">${new Date(sale.created_at).toLocaleString(getLocale())}</td>
             <td class="px-4 py-3 font-bold">Table ${sale.table_id}</td>
             <td class="px-4 py-3 font-bold text-hf-green">฿${parseFloat(sale.total).toFixed(2)}</td>
             <td class="px-4 py-3 text-sm">${paymentLabel}</td>
@@ -832,10 +1714,10 @@ function renderUsers(users) {
     tbody.innerHTML = '';
 
     users.forEach(user => {
-        const roleLabel = user.role === 'admin' ? '👨‍💼 Admin' : '👨‍🍳 เชฟ';
+        const roleLabel = user.role === 'admin' ? tr('roleAdmin') : tr('roleChef');
         const statusBadge = user.is_active 
-            ? '<span class="badge badge-success">ใช้งาน</span>'
-            : '<span class="badge badge-error">ปิด</span>';
+            ? `<span class="badge badge-success">${tr('active')}</span>`
+            : `<span class="badge badge-error">${tr('inactive')}</span>`;
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -844,7 +1726,7 @@ function renderUsers(users) {
             <td class="px-4 py-3">${roleLabel}</td>
             <td class="px-4 py-3">${statusBadge}</td>
             <td class="px-4 py-3 text-center">
-                ${user.role !== 'admin' ? `<button onclick="deleteUser('${user.id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">ลบ</button>` : '-'}
+                ${user.role !== 'admin' ? `<button onclick="deleteUser('${user.id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">${tr('delete')}</button>` : '-'}
             </td>
         `;
         tbody.appendChild(row);
@@ -882,7 +1764,7 @@ async function loadInvites() {
         console.error("❌ Error loading invites:", e);
         const tbody = document.getElementById('invite-list');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">โหลด Cook ID ไม่สำเร็จ</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">${tr('inviteLoadFail')}</td></tr>`;
         }
     }
 }
@@ -900,18 +1782,18 @@ function renderInvites(invites) {
     tbody.innerHTML = '';
 
     if (!invites.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">ยังไม่มี Cook ID</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">${tr('noCookId')}</td></tr>`;
         return;
     }
 
     invites.forEach(invite => {
         const isEnabled = Number(invite.enabled) === 1;
         const createdAt = invite.created_at
-            ? new Date(invite.created_at).toLocaleString('th-TH')
+            ? new Date(invite.created_at).toLocaleString(getLocale())
             : '-';
         const statusBadge = isEnabled
-            ? '<span class="badge badge-success">พร้อมใช้</span>'
-            : '<span class="badge badge-ghost">ถูกใช้แล้ว</span>';
+            ? `<span class="badge badge-success">${tr('readyToUse')}</span>`
+            : `<span class="badge badge-ghost">${tr('usedAlready')}</span>`;
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -920,10 +1802,10 @@ function renderInvites(invites) {
             <td class="px-4 py-3 text-sm">${createdAt}</td>
             <td class="px-4 py-3 text-center">
                 <div class="flex justify-center gap-2 flex-wrap">
-                    <button onclick="copyCookInvite('${invite.cook_id}')" class="btn btn-xs btn-outline rounded-lg">คัดลอก</button>
+                    <button onclick="copyCookInvite('${invite.cook_id}')" class="btn btn-xs btn-outline rounded-lg">${tr('copy')}</button>
                     ${isEnabled
-                        ? `<button onclick="disableCookInvite('${invite.cook_id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">ปิดรหัส</button>`
-                        : '<span class="text-xs text-gray-400 self-center">ปิดแล้ว</span>'}
+                        ? `<button onclick="disableCookInvite('${invite.cook_id}')" class="btn btn-xs btn-outline border-red-500 text-red-500 rounded-lg">${tr('disableCode')}</button>`
+                        : `<span class="text-xs text-gray-400 self-center">${tr('disabledAlready')}</span>`}
                 </div>
             </td>
         `;
@@ -1052,26 +1934,26 @@ function renderHistory(orders) {
     orders.forEach(order => {
         const itemCount = order.items?.length || 0;
         const statusLabel = {
-            'pending': '⏳ รอปรุง',
-            'cooking': '🍳 กำลังปรุง',
-            'serving': '🍽️ เสิร์ฟแล้ว',
-            'paid': '✅ ชำระแล้ว',
-            'cancelled': '❌ ยกเลิก'
+            'pending': tr('statusPending'),
+            'cooking': tr('statusCooking'),
+            'serving': tr('statusServing'),
+            'paid': tr('statusPaid'),
+            'cancelled': tr('statusCancelled')
         }[order.status] || order.status;
 
-        const paymentLabel = order.paid ? '✅ ชำระแล้ว' : '❌ รอชำระ';
+        const paymentLabel = formatPaymentMethodLabel(order.paymentMethod, order.paid);
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td class="px-4 py-3 text-sm">${new Date(order.createdAt).toLocaleString('th-TH')}</td>
+            <td class="px-4 py-3 text-sm">${new Date(order.createdAt).toLocaleString(getLocale())}</td>
             <td class="px-4 py-3 font-bold">Table ${order.tableId}</td>
             <td class="px-4 py-3 text-sm text-gray-600">${order.id.substring(0, 10)}</td>
-            <td class="px-4 py-3 text-center">${itemCount} รายการ</td>
+            <td class="px-4 py-3 text-center">${itemCount} ${tr('itemsCount')}</td>
             <td class="px-4 py-3 font-bold text-hf-green">฿${order.total.toFixed(2)}</td>
             <td class="px-4 py-3 text-sm">${statusLabel}</td>
             <td class="px-4 py-3 text-sm">${paymentLabel}</td>
             <td class="px-4 py-3 text-center">
-                <button onclick="showOrderDetail('${order.id}')" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">ดู</button>
+                <button onclick="showOrderDetail('${order.id}')" class="btn btn-xs btn-outline border-hf-green text-hf-green rounded-lg">${tr('detailsCol')}</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -1098,6 +1980,16 @@ function calculateStats(orders) {
     document.getElementById('history-avg-per-order').innerText = `฿${avgPerOrder.toFixed(2)}`;
 }
 
+function formatPaymentMethodLabel(paymentMethod, paid) {
+    if (!paid) return '❌ Pending Payment';
+
+    return {
+        promptpay: '🏦 PromptPay',
+        card: '💳 Card',
+        cash: '💵 Cash'
+    }[paymentMethod] || '✅ Paid';
+}
+
 async function showOrderDetail(orderId) {
     try {
         const orders = await fetch('/orders').then(r => r.json());
@@ -1117,31 +2009,31 @@ async function showOrderDetail(orderId) {
             </div>
         `).join('');
 
-        const paymentLabel = order.paid ? '✅ ชำระแล้ว' : '❌ ยังไม่ชำระเงิน';
+        const paymentLabel = formatPaymentMethodLabel(order.paymentMethod, order.paid);
 
         const content = `
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <p class="text-xs text-gray-400 uppercase">ออเดอร์</p>
+                        <p class="text-xs text-gray-400 uppercase">${tr('orderCol')}</p>
                         <p class="font-bold text-lg">${order.id}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 uppercase">โต๊ะ</p>
+                        <p class="text-xs text-gray-400 uppercase">${tr('tableCol')}</p>
                         <p class="font-bold text-lg">Table ${order.tableId}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 uppercase">วันที่-เวลา</p>
-                        <p class="font-bold">${new Date(order.createdAt).toLocaleString('th-TH')}</p>
+                        <p class="text-xs text-gray-400 uppercase">${tr('dateCol')}</p>
+                        <p class="font-bold">${new Date(order.createdAt).toLocaleString(getLocale())}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 uppercase">สถานะ</p>
+                        <p class="text-xs text-gray-400 uppercase">${tr('statusCol')}</p>
                         <p class="font-bold">${order.status}</p>
                     </div>
                 </div>
 
                 <div class="border-t border-gray-200 pt-4">
-                    <p class="text-xs text-gray-400 uppercase font-bold mb-3">รายการอาหาร</p>
+                    <p class="text-xs text-gray-400 uppercase font-bold mb-3">${tr('itemsCol')}</p>
                     <div class="space-y-2">
                         ${itemsHtml}
                     </div>
@@ -1149,21 +2041,21 @@ async function showOrderDetail(orderId) {
 
                 <div class="bg-gray-100 p-4 rounded-lg space-y-2">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">ยอดรวม (Subtotal)</span>
+                        <span class="text-gray-600">${currentLang === 'en' ? 'Subtotal' : 'ยอดรวม (Subtotal)'}</span>
                         <span class="font-bold">฿${order.subtotal.toFixed(2)}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">ภาษีมูลค่าเพิ่ม (7%)</span>
+                        <span class="text-gray-600">${currentLang === 'en' ? 'VAT (7%)' : 'ภาษีมูลค่าเพิ่ม (7%)'}</span>
                         <span class="font-bold">฿${order.subtotal ? (order.subtotal * 0.07).toFixed(2) : '0.00'}</span>
                     </div>
                     <div class="border-t border-gray-300 pt-2 flex justify-between">
-                        <span class="font-bold">ยอดสุทธิ</span>
+                        <span class="font-bold">${currentLang === 'en' ? 'Grand Total' : 'ยอดสุทธิ'}</span>
                         <span class="font-black text-lg text-hf-green">฿${order.total.toFixed(2)}</span>
                     </div>
                 </div>
 
                 <div class="bg-hf-green-light p-4 rounded-lg">
-                    <p class="text-xs text-gray-600">สถานะการชำระเงิน</p>
+                    <p class="text-xs text-gray-600">${currentLang === 'en' ? 'Payment Status' : 'สถานะการชำระเงิน'}</p>
                     <p class="font-bold text-hf-green-dark">${paymentLabel}</p>
                 </div>
             </div>
@@ -1195,10 +2087,10 @@ async function exportHistory() {
         
         filtered.forEach(o => {
             const date = new Date(o.createdAt);
-            const dateStr = date.toLocaleDateString('th-TH');
-            const timeStr = date.toLocaleTimeString('th-TH');
+            const dateStr = date.toLocaleDateString(getLocale());
+            const timeStr = date.toLocaleTimeString(getLocale());
             const itemCount = o.items?.length || 0;
-            const paymentLabel = o.paid ? 'ชำระแล้ว' : 'รอชำระ';
+            const paymentLabel = formatPaymentMethodLabel(o.paymentMethod, o.paid);
             
             csv += `"${dateStr}","${timeStr}","${o.tableId}","${o.id}","${itemCount}","${o.total.toFixed(2)}","${o.status}","${paymentLabel}"\n`;
         });
@@ -1225,7 +2117,7 @@ async function exportHistory() {
 
 function updateTime() {
     const now = new Date();
-    document.getElementById('time').innerText = now.toLocaleTimeString('th-TH');
+    document.getElementById('time').innerText = now.toLocaleTimeString(getLocale());
 }
 
 function logout() {
@@ -1244,8 +2136,19 @@ function logout() {
 
 window.addEventListener('DOMContentLoaded', async () => {
     console.log("📊 Admin dashboard loading...");
+    setLang(currentLang);
     updateTime();
     setInterval(updateTime, 1000);
+
+    const today = getTodayDateString();
+    const dashboardStart = document.getElementById('dashboard-date-start');
+    const dashboardEnd = document.getElementById('dashboard-date-end');
+    const reviewStart = document.getElementById('review-date-start');
+    const reviewEnd = document.getElementById('review-date-end');
+    if (dashboardStart) dashboardStart.value = today;
+    if (dashboardEnd) dashboardEnd.value = today;
+    if (reviewStart) reviewStart.value = today;
+    if (reviewEnd) reviewEnd.value = today;
     
     if (currentPage === 'dashboard') {
         await loadDashboard();

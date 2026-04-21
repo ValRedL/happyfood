@@ -10,6 +10,82 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="/db-client.js" defer></script>
     <script>tailwind.config = { theme: { extend: { colors: { 'hf-green':'#A3B18A','hf-green-dark':'#344E41','hf-green-light':'#E9EDC9','hf-bg':'#F8F9FA' }}}}</script>
+    <script>
+        const tl = {
+            th: {
+                pageTitle: 'ชำระเงิน - Happy Food',
+                table: 'โต๊ะ',
+                yourItems: '📝 รายการอาหารของคุณ',
+                subtotal: 'ยอดรวม (Subtotal)',
+                vat: 'ภาษีมูลค่าเพิ่ม (VAT 7%)',
+                total: 'ยอดสุทธิ (Total)',
+                paymentMethods: '💳 ช่องทางการชำระเงิน',
+                promptpayDesc: 'สแกนจ่ายผ่านแอปธนาคารทุกประเภท',
+                cardTitle: 'บัตรเครดิต / เดบิต',
+                cardDesc: 'รองรับ VISA, Mastercard, JCB',
+                cashTitle: 'เงินสด (Cash)',
+                cashDesc: 'เรียกพนักงานมาเก็บเงินที่โต๊ะ',
+                payNow: 'ชำระเงินตอนนี้',
+                scanPromptPay: 'สแกน PromptPay',
+                accountName: 'ชื่อบัญชี: Happy Food Co., Ltd.',
+                confirmPaid: '✅ ยืนยันว่าจ่ายแล้ว',
+                enjoyMeal: 'ทานให้อร่อยนะครับ!',
+                reviewPrompt: 'เราอยากฟังความรู้สึกของคุณเกี่ยวกับมื้อนี้',
+                reviewPlaceholder: 'บอกเราหน่อยว่ารสชาติเป็นยังไงบ้าง...',
+                submitReview: 'ส่งรีวิว ✨',
+                skipReview: 'ข้ามไปเลย',
+                callStaff: 'เรียกพนักงาน',
+                callStaffDesc: 'พนักงานกำลังนำบิลและรับชำระที่โต๊ะครับ',
+                acknowledge: 'รับทราบ',
+                cardProcessing: 'กำลังหักเงินผ่านบัตร...',
+                reviewSubmitFailed: 'ส่งรีวิวไม่สำเร็จ',
+                reviewRetry: 'กรุณาลองใหม่อีกครั้ง',
+                thankYou: 'ขอบคุณที่ใช้บริการ! 🙏',
+                thankYouDesc: 'Happy Food ยินดีที่ได้ให้บริการคุณ',
+                ok: 'ตกลง',
+                connectError: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
+                paymentError: 'เกิดข้อผิดพลาด',
+                noteLabel: 'หมายเหตุ: ',
+                anonymousError: 'กรุณาลองใหม่อีกครั้ง'
+            },
+            en: {
+                pageTitle: 'Checkout - Happy Food',
+                table: 'Table',
+                yourItems: '📝 Your Order Summary',
+                subtotal: 'Subtotal',
+                vat: 'VAT (7%)',
+                total: 'Grand Total',
+                paymentMethods: '💳 Payment Method',
+                promptpayDesc: 'Scan and pay with any banking app',
+                cardTitle: 'Credit / Debit Card',
+                cardDesc: 'Supports VISA, Mastercard, JCB',
+                cashTitle: 'Cash',
+                cashDesc: 'Ask staff to collect payment at your table',
+                payNow: 'Pay Now',
+                scanPromptPay: 'Scan PromptPay',
+                accountName: 'Account Name: Happy Food Co., Ltd.',
+                confirmPaid: '✅ I have paid',
+                enjoyMeal: 'Enjoy your meal!',
+                reviewPrompt: 'We would love to hear how you felt about this meal',
+                reviewPlaceholder: 'Tell us how the food tasted...',
+                submitReview: 'Submit Review ✨',
+                skipReview: 'Skip',
+                callStaff: 'Call Staff',
+                callStaffDesc: 'A staff member is bringing the bill to your table.',
+                acknowledge: 'OK',
+                cardProcessing: 'Processing card payment...',
+                reviewSubmitFailed: 'Failed to submit review',
+                reviewRetry: 'Please try again',
+                thankYou: 'Thank you for dining with us! 🙏',
+                thankYouDesc: 'Happy Food was glad to serve you',
+                ok: 'OK',
+                connectError: 'Connection error',
+                paymentError: 'Error',
+                noteLabel: 'Note: ',
+                anonymousError: 'Please try again'
+            }
+        };
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap');
         body { font-family:'Noto Sans Thai',sans-serif; background:#F8F9FA; }
@@ -21,10 +97,14 @@
 
 <nav class="navbar bg-white border-b border-gray-100 px-6 sticky top-0 z-50 shadow-sm">
     <div class="flex-1">
-        <a href="/menu-page" class="btn btn-ghost btn-circle text-gray-400">
+        <a id="btn-back-menu" href="/menu-page" class="btn btn-ghost btn-circle text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
         </a>
         <h1 class="text-xl font-bold ml-2 text-neutral">Check<span class="text-hf-green">out</span></h1>
+    </div>
+    <div class="join border border-gray-200 rounded-full overflow-hidden bg-white mr-3">
+        <button onclick="setLang('th')" id="btn-th" class="btn btn-xs join-item bg-hf-green-light border-none font-bold text-hf-green-dark">TH</button>
+        <button onclick="setLang('en')" id="btn-en" class="btn btn-xs join-item bg-transparent border-none text-gray-500 hover:text-hf-green">EN</button>
     </div>
     <div id="table-badge" class="badge badge-neutral p-3 font-bold">Table --</div>
 </nav>
@@ -32,51 +112,51 @@
 <main class="container mx-auto max-w-2xl p-6 space-y-6">
 
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-        <h2 class="font-bold text-lg mb-4 flex items-center gap-2">📝 รายการอาหารของคุณ</h2>
+        <h2 id="summary-title" class="font-bold text-lg mb-4 flex items-center gap-2">📝 รายการอาหารของคุณ</h2>
         <div id="summary-items" class="space-y-3 mb-6"></div>
         <div class="border-t border-dashed pt-4 space-y-2">
-            <div class="flex justify-between text-sm text-gray-400"><span>ยอดรวม (Subtotal)</span><span id="subtotal">฿0.00</span></div>
-            <div class="flex justify-between text-sm text-gray-400"><span>ภาษีมูลค่าเพิ่ม (VAT 7%)</span><span id="vat">฿0.00</span></div>
+            <div class="flex justify-between text-sm text-gray-400"><span id="subtotal-label">ยอดรวม (Subtotal)</span><span id="subtotal">฿0.00</span></div>
+            <div class="flex justify-between text-sm text-gray-400"><span id="vat-label">ภาษีมูลค่าเพิ่ม (VAT 7%)</span><span id="vat">฿0.00</span></div>
             <div class="flex justify-between text-xl font-black mt-4 pt-4 border-t border-gray-100">
-                <span class="text-neutral">ยอดสุทธิ (Total)</span>
+                <span id="grand-total-label" class="text-neutral">ยอดสุทธิ (Total)</span>
                 <span id="grand-total" class="text-hf-green">฿0.00</span>
             </div>
         </div>
     </div>
 
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-        <h2 class="font-bold text-lg mb-5 flex items-center gap-2">💳 ช่องทางการชำระเงิน</h2>
+        <h2 id="payment-title" class="font-bold text-lg mb-5 flex items-center gap-2">💳 ช่องทางการชำระเงิน</h2>
         <div class="space-y-3">
             <div onclick="selectPay('promptpay',this)" class="pay-card active p-4 rounded-2xl bg-gray-50 flex items-center gap-4">
                 <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-2xl">🏦</div>
-                <div class="flex-1"><p class="font-bold text-sm">Thai QR PromptPay</p><p class="text-[11px] text-gray-400">สแกนจ่ายผ่านแอปธนาคารทุกประเภท</p></div>
+                <div class="flex-1"><p class="font-bold text-sm">Thai QR PromptPay</p><p id="promptpay-desc" class="text-[11px] text-gray-400">สแกนจ่ายผ่านแอปธนาคารทุกประเภท</p></div>
                 <input type="radio" name="pay" checked class="radio radio-sm radio-success" />
             </div>
             <div onclick="selectPay('card',this)" class="pay-card p-4 rounded-2xl bg-gray-50 flex items-center gap-4">
                 <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-600 font-bold text-xs italic">VISA</div>
-                <div class="flex-1"><p class="font-bold text-sm">Credit / Debit Card</p><p class="text-[11px] text-gray-400">รองรับ VISA, Mastercard, JCB</p></div>
+                <div class="flex-1"><p id="card-title" class="font-bold text-sm">Credit / Debit Card</p><p id="card-desc" class="text-[11px] text-gray-400">รองรับ VISA, Mastercard, JCB</p></div>
                 <input type="radio" name="pay" class="radio radio-sm radio-success" />
             </div>
             <div onclick="selectPay('cash',this)" class="pay-card p-4 rounded-2xl bg-gray-50 flex items-center gap-4">
                 <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-2xl">💵</div>
-                <div class="flex-1"><p class="font-bold text-sm">เงินสด (Cash)</p><p class="text-[11px] text-gray-400">เรียกพนักงานมาเก็บเงินที่โต๊ะ</p></div>
+                <div class="flex-1"><p id="cash-title" class="font-bold text-sm">เงินสด (Cash)</p><p id="cash-desc" class="text-[11px] text-gray-400">เรียกพนักงานมาเก็บเงินที่โต๊ะ</p></div>
                 <input type="radio" name="pay" class="radio radio-sm radio-success" />
             </div>
         </div>
-        <button onclick="processPayment()" class="btn btn-block bg-hf-green border-none text-white mt-8 h-14 rounded-2xl text-lg font-bold shadow-lg shadow-hf-green/20">ชำระเงินตอนนี้</button>
+        <button id="pay-now-btn" onclick="processPayment()" class="btn btn-block bg-hf-green border-none text-white mt-8 h-14 rounded-2xl text-lg font-bold shadow-lg shadow-hf-green/20">ชำระเงินตอนนี้</button>
     </div>
 </main>
 
 <dialog id="qr-modal" class="modal">
     <div class="modal-box bg-white p-8 rounded-3xl max-w-xs text-center">
         <div class="text-5xl mb-4">📱</div>
-        <p class="font-bold text-lg mb-2">สแกน PromptPay</p>
+        <p id="qr-title" class="font-bold text-lg mb-2">สแกน PromptPay</p>
         <div class="bg-white p-4 border-2 border-hf-green rounded-2xl inline-block shadow-inner mb-4">
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=HappyFoodPayment" class="w-40 h-40 rounded-lg" />
         </div>
-        <p class="text-xs text-gray-400">ชื่อบัญชี: Happy Food Co., Ltd.</p>
+        <p id="qr-account-name" class="text-xs text-gray-400">ชื่อบัญชี: Happy Food Co., Ltd.</p>
         <p id="qr-amount" class="text-2xl font-black text-neutral mt-2">฿0.00</p>
-        <button onclick="confirmPaymentDone()" class="btn btn-block bg-hf-green border-none text-white mt-6 rounded-xl">✅ ยืนยันว่าจ่ายแล้ว</button>
+        <button id="qr-confirm-btn" onclick="confirmPaymentDone()" class="btn btn-block bg-hf-green border-none text-white mt-6 rounded-xl">✅ ยืนยันว่าจ่ายแล้ว</button>
     </div>
 </dialog>
 
@@ -84,8 +164,8 @@
     <div class="modal-box bg-white p-8 rounded-t-3xl sm:rounded-3xl">
         <div class="text-center space-y-4">
             <div class="text-6xl">😋</div>
-            <h3 class="font-bold text-2xl text-neutral">ทานให้อร่อยนะครับ!</h3>
-            <p class="text-sm text-gray-400">เราอยากฟังความรู้สึกของคุณเกี่ยวกับมื้อนี้</p>
+            <h3 id="review-modal-title" class="font-bold text-2xl text-neutral">ทานให้อร่อยนะครับ!</h3>
+            <p id="review-modal-subtitle" class="text-sm text-gray-400">เราอยากฟังความรู้สึกของคุณเกี่ยวกับมื้อนี้</p>
             <div class="rating rating-lg gap-1 mt-4" id="star-rating">
                 <input type="radio" name="rating" value="1" class="mask mask-star-2 bg-orange-400" />
                 <input type="radio" name="rating" value="2" class="mask mask-star-2 bg-orange-400" />
@@ -95,8 +175,8 @@
             </div>
             <textarea id="review-text" rows="3" class="textarea textarea-bordered w-full bg-hf-bg border-gray-100 rounded-2xl mt-2 resize-none" placeholder="บอกเราหน่อยว่ารสชาติเป็นยังไงบ้าง..."></textarea>
             <div class="flex flex-col gap-3 mt-4">
-                <button onclick="submitReview(true)" class="btn bg-hf-green border-none text-white rounded-2xl font-bold">ส่งรีวิว ✨</button>
-                <button onclick="submitReview(false)" class="btn btn-ghost text-gray-400 rounded-2xl">ข้ามไปเลย</button>
+                <button id="submit-review-btn" onclick="submitReview(true)" class="btn bg-hf-green border-none text-white rounded-2xl font-bold">ส่งรีวิว ✨</button>
+                <button id="skip-review-btn" onclick="submitReview(false)" class="btn btn-ghost text-gray-400 rounded-2xl">ข้ามไปเลย</button>
             </div>
         </div>
     </div>
@@ -106,18 +186,119 @@
 let selectedMethod = 'promptpay';
 let currentOrder = null;
 let grandTotal = 0;
+let lang = localStorage.getItem('customerLang') || 'th';
+let menuNameMap = {};
+
+function translateToppingLabel(label) {
+    const raw = String(label || '').trim();
+    if (lang !== 'en') return raw.replace('หวานปกต��', 'หวานปกติ');
+
+    const priceMatch = raw.match(/\(\s*\+\s*([\d.]+)\s*\)/);
+    const priceSuffix = priceMatch ? ` (+${priceMatch[1]})` : '';
+    const base = raw.replace(/\s*\(\s*\+\s*[\d.]+\s*\)/, '').trim().replace('หวานปกต��', 'หวานปกติ');
+    const toppingMap = {
+        'ไข่ดาว': 'Fried Egg',
+        'ข้าวเพิ่ม': 'Extra Rice',
+        'หมูพิเศษ': 'Extra Pork',
+        'กุ้งพิเศษ': 'Extra Shrimp',
+        'เส้นเพิ่ม': 'Extra Noodles',
+        'ปูพิเศษ': 'Extra Crab',
+        'เส้นใหญ่': 'Wide Noodles',
+        'เส้นเล็ก': 'Thin Noodles',
+        'ข้าว': 'Rice',
+        'ลูกชิ้น': 'Meatballs',
+        'หวานน้อย': 'Less Sweet',
+        'หวานปกติ': 'Normal Sweet',
+        'หวานมาก': 'Extra Sweet',
+        'กะทิเพิ่ม': 'Extra Coconut Milk',
+        'ช็อกโกแลต': 'Chocolate',
+        'นมข้น': 'Condensed Milk'
+    };
+    return `${toppingMap[base] || base}${priceSuffix}`;
+}
+
+function getItemName(item) {
+    if (lang === 'en') {
+        return item.name_en || menuNameMap[item.menuId]?.name_en || item.name || item.name_th || menuNameMap[item.menuId]?.name_th || '-';
+    }
+    return item.name_th || item.name || menuNameMap[item.menuId]?.name_th || item.name_en || menuNameMap[item.menuId]?.name_en || '-';
+}
+
+function updateStaticTexts() {
+    document.title = tl[lang].pageTitle;
+    document.documentElement.lang = lang;
+    document.getElementById('btn-th').className = `btn btn-xs join-item border-none font-bold ${lang === 'th' ? 'bg-hf-green-light text-hf-green-dark' : 'bg-transparent text-gray-500 hover:text-hf-green'}`;
+    document.getElementById('btn-en').className = `btn btn-xs join-item border-none font-bold ${lang === 'en' ? 'bg-hf-green-light text-hf-green-dark' : 'bg-transparent text-gray-500 hover:text-hf-green'}`;
+
+    const fields = {
+        'summary-title': tl[lang].yourItems,
+        'subtotal-label': tl[lang].subtotal,
+        'vat-label': tl[lang].vat,
+        'grand-total-label': tl[lang].total,
+        'payment-title': tl[lang].paymentMethods,
+        'promptpay-desc': tl[lang].promptpayDesc,
+        'card-title': tl[lang].cardTitle,
+        'card-desc': tl[lang].cardDesc,
+        'cash-title': tl[lang].cashTitle,
+        'cash-desc': tl[lang].cashDesc,
+        'pay-now-btn': tl[lang].payNow,
+        'qr-title': tl[lang].scanPromptPay,
+        'qr-account-name': tl[lang].accountName,
+        'qr-confirm-btn': tl[lang].confirmPaid,
+        'review-modal-title': tl[lang].enjoyMeal,
+        'review-modal-subtitle': tl[lang].reviewPrompt,
+        'submit-review-btn': tl[lang].submitReview,
+        'skip-review-btn': tl[lang].skipReview
+    };
+
+    Object.entries(fields).forEach(([id, text]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+    });
+
+    document.getElementById('review-text').placeholder = tl[lang].reviewPlaceholder;
+}
+
+function setLang(nextLang) {
+    lang = nextLang;
+    localStorage.setItem('customerLang', nextLang);
+    updateStaticTexts();
+    if (currentOrder) renderSummary();
+}
+
+function renderSummary() {
+    const tableId = DB.get(DB.KEYS.SELECTED_TABLE);
+    document.getElementById('table-badge').innerText = `${tl[lang].table} ${tableId || '--'}`;
+
+    const container = document.getElementById('summary-items');
+    container.innerHTML = currentOrder.items.map(item => `
+        <div class="flex justify-between items-start text-sm">
+            <div class="flex-1">
+                <span class="font-medium text-neutral">${item.img} ${item.qty}× ${getItemName(item)}</span>
+                ${item.toppings && item.toppings.length ? `<p class="text-[11px] text-gray-400 mt-0.5">${item.toppings.map(translateToppingLabel).join(', ')}</p>` : ''}
+                ${item.note ? `<p class="text-[11px] text-hf-green mt-0.5">📝 ${tl[lang].noteLabel}${item.note}</p>` : ''}
+            </div>
+            <span class="font-bold text-neutral ml-4">฿${Number(item.totalPrice).toFixed(2)}</span>
+        </div>`).join('');
+
+    const sub = Number(currentOrder.subtotal || 0);
+    const vat = sub * 0.07;
+    grandTotal = Number(currentOrder.total || 0);
+
+    document.getElementById('subtotal').innerText = `฿${sub.toFixed(2)}`;
+    document.getElementById('vat').innerText = `฿${vat.toFixed(2)}`;
+    document.getElementById('grand-total').innerText = `฿${grandTotal.toFixed(2)}`;
+    document.getElementById('qr-amount').innerText = `฿${grandTotal.toFixed(2)}`;
+}
 
 async function init() {
     console.log("💳 Initializing checkout...");
     
     if (typeof DB === 'undefined') {
         console.error("❌ DB not loaded");
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+        alert(tl[lang].connectError);
         return;
     }
-
-    const tableId = DB.get(DB.KEYS.SELECTED_TABLE);
-    document.getElementById('table-badge').innerText = `Table ${tableId || '--'}`;
 
     currentOrder = DB.getCurrentOrder();
     if (!currentOrder) {
@@ -126,26 +307,18 @@ async function init() {
         return;
     }
 
-    const container = document.getElementById('summary-items');
-    container.innerHTML = currentOrder.items.map(item => `
-        <div class="flex justify-between items-start text-sm">
-            <div class="flex-1">
-                <span class="font-medium text-neutral">${item.img} ${item.qty}× ${item.name}</span>
-                ${item.toppings && item.toppings.length ? `<p class="text-[11px] text-gray-400 mt-0.5">${item.toppings.join(', ')}</p>` : ''}
-                ${item.note ? `<p class="text-[11px] text-hf-green mt-0.5">📝 ${item.note}</p>` : ''}
-            </div>
-            <span class="font-bold text-neutral ml-4">฿${item.totalPrice}</span>
-        </div>`).join('');
+    try {
+        const menuItems = await DB.getMenu();
+        menuNameMap = Object.fromEntries(menuItems.map(item => [item.id, {
+            name_th: item.name_th || item.name,
+            name_en: item.name || item.name_en || item.name_th
+        }]));
+    } catch (e) {
+        console.error('❌ Failed to preload menu names:', e);
+    }
 
-    // ✅ FIXED: currentOrder.subtotal is already in the response
-    const sub = currentOrder.subtotal;
-    const vat = sub * 0.07;
-    grandTotal = currentOrder.total; // total already includes VAT
-    
-    document.getElementById('subtotal').innerText = `฿${sub.toFixed(2)}`;
-    document.getElementById('vat').innerText = `฿${vat.toFixed(2)}`;
-    document.getElementById('grand-total').innerText = `฿${grandTotal.toFixed(2)}`;
-    document.getElementById('qr-amount').innerText = `฿${grandTotal.toFixed(2)}`;
+    updateStaticTexts();
+    renderSummary();
 
     const sessionId = localStorage.getItem('activeSessionId');
     if (sessionId) {
@@ -170,15 +343,15 @@ function processPayment() {
         document.getElementById('qr-modal').showModal();
     } else if (selectedMethod === 'cash') {
         Swal.fire({
-            title:'เรียกพนักงาน',
-            text:'พนักงานกำลังนำบิลและรับชำระที่โต๊ะครับ',
+            title:tl[lang].callStaff,
+            text:tl[lang].callStaffDesc,
             icon:'info',
             confirmButtonColor:'#A3B18A',
-            confirmButtonText:'รับทราบ'
+            confirmButtonText:tl[lang].acknowledge
         }).then(() => confirmPaymentDone());
     } else {
         Swal.fire({
-            title:'กำลังหักเงินผ่านบัตร...',
+            title:tl[lang].cardProcessing,
             timer:2000,
             showConfirmButton:false,
             didOpen:()=>Swal.showLoading()
@@ -222,13 +395,13 @@ async function submitReview(withReview) {
                 })
             });
             if (!response.ok) {
-                const message = await response.text().catch(() => 'ส่งรีวิวไม่สำเร็จ');
-                throw new Error(message || 'ส่งรีวิวไม่สำเร็จ');
+                const message = await response.text().catch(() => tl[lang].reviewSubmitFailed);
+                throw new Error(message || tl[lang].reviewSubmitFailed);
             }
             console.log("✅ Review submitted");
         } catch(e) { 
             console.error("Review error:", e);
-            Swal.fire('ส่งรีวิวไม่สำเร็จ', e.message || 'กรุณาลองใหม่อีกครั้ง', 'error');
+            Swal.fire(tl[lang].reviewSubmitFailed, e.message || tl[lang].reviewRetry, 'error');
             return;
         }
     }
@@ -238,11 +411,11 @@ async function submitReview(withReview) {
 
     // ✅ เด้งข้อความขอบคุณ
     Swal.fire({
-        title:'ขอบคุณที่ใช้บริการ! 🙏',
-        text:'Happy Food ยินดีที่ได้ให้บริการคุณ',
+        title:tl[lang].thankYou,
+        text:tl[lang].thankYouDesc,
         icon:'success',
         confirmButtonColor:'#A3B18A',
-        confirmButtonText:'ตกลง'
+        confirmButtonText:tl[lang].ok
     }).then(async () => {
         // ✅ ปล่อยโต๊ะให้ว่าง
         try {
