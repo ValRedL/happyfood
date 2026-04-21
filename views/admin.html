@@ -29,6 +29,8 @@
         .stat-card.red { background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); }
         .stat-card.yellow { background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); }
         .stat-card.blue { background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%); }
+        .chart-wrapper { position: relative; height: 320px; width: 100%; }
+        .chart-wrapper canvas { width: 100% !important; height: 100% !important; display: block; }
     </style>
 </head>
 <body>
@@ -145,7 +147,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 id="dashboard-chart-title" class="text-lg font-bold text-neutral mb-4">📈 ยอดขาย 7 วันล่าสุด</h3>
-                <canvas id="salesChart" height="80"></canvas>
+                <div class="chart-wrapper">
+                    <canvas id="salesChart"></canvas>
+                </div>
             </div>
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 id="dashboard-payment-title" class="text-lg font-bold text-neutral mb-4">💳 ช่องทางชำระเงิน</h3>
@@ -262,11 +266,11 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div class="stat bg-hf-bg rounded-2xl">
-                            <div class="stat-title text-xs">ใช้งานได้</div>
+                            <div id="invite-active-label" class="stat-title text-xs">ใช้งานได้</div>
                             <div id="invite-active-count" class="stat-value text-2xl text-hf-green">0</div>
                         </div>
                         <div class="stat bg-hf-bg rounded-2xl">
-                            <div class="stat-title text-xs">ถูกใช้/ปิดแล้ว</div>
+                            <div id="invite-disabled-label" class="stat-title text-xs">ถูกใช้/ปิดแล้ว</div>
                             <div id="invite-disabled-count" class="stat-value text-2xl text-gray-500">0</div>
                         </div>
                     </div>
@@ -287,9 +291,9 @@
                         <thead class="bg-hf-bg border-b border-gray-200">
                             <tr>
                                 <th class="px-4 py-3 text-left font-bold">Cook ID</th>
-                                <th class="px-4 py-3 text-left font-bold">สถานะ</th>
+                                <th id="invite-status-col" class="px-4 py-3 text-left font-bold">สถานะ</th>
                                 <th id="invite-created-col" class="px-4 py-3 text-left font-bold">สร้างเมื่อ</th>
-                                <th class="px-4 py-3 text-center font-bold">จัดการ</th>
+                                <th id="invite-actions-col" class="px-4 py-3 text-center font-bold">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="invite-list" class="divide-y divide-gray-100">
@@ -572,6 +576,10 @@
 </dialog>
 
 <script>
+// state กลางของหน้า admin
+// เราเก็บข้อมูลที่โหลดมาไว้ในตัวแปรพวกนี้ เพื่อให้:
+// 1) render ซ้ำได้โดยไม่ต้องยิง API ทุกครั้ง
+// 2) ใช้ข้อมูลเดิมต่อระหว่างการเปิด modal / เปลี่ยนภาษา / เปลี่ยนหน้า
 let allTables = {};
 let allMenus = [];
 let allOrders = [];
@@ -583,6 +591,8 @@ let allInvites = [];
 let salesChartInstance = null;
 let currentLang = localStorage.getItem('adminLang') || 'th';
 
+// object นี้คือแหล่งรวมข้อความของหน้า admin ทั้งไทยและอังกฤษ
+// เวลาสลับภาษา หน้าเว็บจะอ่านข้อความจาก key ใน object นี้แทนการ hardcode
 const i18n = {
     th: {
         sidebarSubtitle: 'แดชบอร์ดผู้ดูแลระบบ',
@@ -878,6 +888,11 @@ function tr(key) {
 // PAGE MANAGEMENT
 // ============================================================
 
+// ฟังก์ชันนี้ใช้เหมือนตัวควบคุมหลักของหน้า admin
+// หน้าที่คือ:
+// 1) ซ่อนทุก page section
+// 2) เปิด page ที่ผู้ใช้เลือก
+// 3) โหลดข้อมูลของ page นั้นทันที
 function showPage(page) {
     document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`page-${page}`).classList.remove('hidden');
@@ -910,6 +925,8 @@ function setLang(lang) {
     showPage(currentPage);
 }
 
+// อัปเดตข้อความคงที่บนหน้า เช่น title, label, ปุ่ม, placeholder
+// ส่วนข้อมูลที่มาจาก database จะถูกแปล/format ตอน render อีกชั้นหนึ่ง
 function updateStaticTexts() {
     const navLabels = {
         'nav-dashboard': tr('navDashboard'),
@@ -989,10 +1006,14 @@ function updateStaticTexts() {
         'btn-create-cookid': currentLang === 'en' ? 'Create' : 'สร้าง',
         'label-new-table-id': tr('tableNumber'),
         'label-new-table-capacity': tr('capacityPeople'),
+        'invite-active-label': tr('usable'),
+        'invite-disabled-label': tr('usedDisabled'),
         'cookid-list-title': tr('inviteListTitle'),
         'cookid-list-subtitle': tr('inviteListSubtitle'),
         'btn-refresh-invites': tr('refresh'),
+        'invite-status-col': tr('statusCol'),
         'invite-created-col': tr('createdAtCol'),
+        'invite-actions-col': tr('actionsCol'),
         'users-section-title': tr('usersSectionTitle'),
         'reviews-section-title': tr('reviewsPageTitle'),
         'reviews-section-subtitle': tr('reviewsPageSubtitle'),
@@ -1088,6 +1109,8 @@ function updateStaticTexts() {
 // DASHBOARD
 // ============================================================
 
+// Dashboard เป็นภาพรวมของระบบ
+// ฟังก์ชันนี้จะดึงหลาย endpoint พร้อมกัน แล้วคำนวณ metric ก่อน render
 async function loadDashboard() {
     try {
         console.log("📊 Loading dashboard...");
@@ -1162,6 +1185,18 @@ function getTodayDateString() {
 
 function getLocale() {
     return currentLang === 'en' ? 'en-US' : 'th-TH';
+}
+
+function formatCurrency(value) {
+    return `฿${Number(value || 0).toFixed(2)}`;
+}
+
+function formatShortDateLabel(dateValue) {
+    const date = new Date(dateValue);
+    return date.toLocaleDateString(getLocale(), {
+        day: '2-digit',
+        month: 'short'
+    });
 }
 
 function getDashboardDateRange() {
@@ -1240,7 +1275,7 @@ function renderSalesChart(sales, startDate, endDate) {
     const end = new Date(endDate);
     while (current <= end) {
         const key = current.toISOString().split('T')[0];
-        labels.push(key);
+        labels.push(formatShortDateLabel(key));
         data.push(Number((totals.get(key) || 0).toFixed(2)));
         current.setDate(current.getDate() + 1);
     }
@@ -1265,7 +1300,42 @@ function renderSalesChart(sales, startDate, endDate) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } }
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => formatCurrency(value)
+                    },
+                    title: {
+                        display: true,
+                        text: currentLang === 'en' ? 'Sales (THB)' : 'ยอดขาย (บาท)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: currentLang === 'en' ? 'Date' : 'วันที่'
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: (items) => items[0]?.label || '',
+                        label: (context) => {
+                            const value = context.parsed?.y ?? 0;
+                            return currentLang === 'en'
+                                ? `Sales: ${formatCurrency(value)}`
+                                : `ยอดขาย: ${formatCurrency(value)}`;
+                        }
+                    }
+                }
+            }
         }
     });
 }
@@ -1278,6 +1348,9 @@ function applyDashboardRange() {
 // TABLES
 // ============================================================
 
+// โหลดข้อมูลโต๊ะทั้งหมดจาก backend แล้วเก็บไว้ใน allTables
+// ฟังก์ชันนี้มีหน้าที่ "fetch data" อย่างเดียว
+// ส่วนการสร้าง HTML จริงจะให้ renderTables() รับช่วงต่อ
 async function loadTables() {
     try {
         console.log("📋 Loading tables...");
@@ -1288,6 +1361,9 @@ async function loadTables() {
     }
 }
 
+// renderTables() แปลง object ของโต๊ะทั้งหมด -> แถวในตาราง HTML
+// จุดสำคัญคือ function นี้ไม่คุยกับ database โดยตรง
+// มันอ่านค่าจาก allTables แล้ววาดหน้าจออย่างเดียว
 function renderTables() {
     const tbody = document.getElementById('table-list');
     tbody.innerHTML = '';
@@ -1317,12 +1393,20 @@ function renderTables() {
     });
 }
 
+// modal นี้เป็นแค่หน้ากรอกข้อมูลก่อนส่งจริง
+// เรา reset ค่า input ทุกครั้ง เพื่อกันค่าจากรอบก่อนค้างอยู่
 function showAddTableModal() {
     document.getElementById('new-table-id').value = '';
     document.getElementById('new-table-capacity').value = '4';
     document.getElementById('add-table-modal').showModal();
 }
 
+// addNewTable() คือจุดที่เชื่อม form -> API
+// flow คือ:
+// 1) อ่านค่าจาก input
+// 2) validate เบื้องต้น
+// 3) ส่ง POST ไป backend
+// 4) ถ้าสำเร็จค่อย reload ตารางโต๊ะใหม่
 async function addNewTable() {
     const id = document.getElementById('new-table-id').value.trim();
     const capacity = parseInt(document.getElementById('new-table-capacity').value) || 4;
@@ -1349,6 +1433,8 @@ async function addNewTable() {
     }
 }
 
+// เวลา admin กด "Change" เราจะจำ tableId ที่กำลังแก้ไว้ก่อน
+// selectedTableId จะถูกใช้ต่อใน changeTableStatus()
 function showStatusModal(tableId) {
     selectedTableId = tableId;
     document.getElementById('status-modal-title').innerText = currentLang === 'en'
@@ -1365,6 +1451,8 @@ function showStatusModal(tableId) {
     document.getElementById('status-modal').showModal();
 }
 
+// เปลี่ยนสถานะโต๊ะจริงที่ backend
+// หลังอัปเดตเสร็จ เราเรียก loadTables() เพื่อดึงสถานะล่าสุดกลับมา render ใหม่
 async function changeTableStatus(status) {
     if (!selectedTableId) return;
 
@@ -1384,6 +1472,8 @@ async function changeTableStatus(status) {
     }
 }
 
+// forceReleaseTable ใช้เคลียร์โต๊ะกลับเป็น vacant ทันที
+// เหมาะกับเคสที่สถานะค้าง หรือ admin ต้องการรีเซ็ตโต๊ะด้วยตนเอง
 async function forceReleaseTable(tableId) {
     Swal.fire({
         title: 'ปล่อยโต๊ะ?',
@@ -1417,6 +1507,8 @@ async function forceReleaseTable(tableId) {
 // MENU
 // ============================================================
 
+// โหลดเมนูทั้งหมดของร้านจาก API กลาง
+// allMenus จะถูกใช้ทั้งในตาราง list และตอนเปิด modal แก้ไขเมนู
 async function loadMenus() {
     try {
         console.log("🍽️ Loading menus...");
@@ -1427,6 +1519,8 @@ async function loadMenus() {
     }
 }
 
+// วาดตารางเมนูจาก allMenus
+// ปุ่ม edit / enable / delete ในแต่ละแถวจะผูกไปยังฟังก์ชัน action ของเมนูนั้น
 function renderMenus() {
     const tbody = document.getElementById('menu-list');
     tbody.innerHTML = '';
@@ -1457,6 +1551,8 @@ function renderMenus() {
     });
 }
 
+// เปิด modal เพิ่มเมนู พร้อมเคลียร์ค่ารอบก่อน
+// ค่า emoji ถูกตั้ง default ไว้เพื่อให้เมนูใหม่มี icon ทันทีแม้ยังไม่ได้ใส่รูป
 function showAddMenuModal() {
     document.getElementById('new-menu-name-th').value = '';
     document.getElementById('new-menu-name-en').value = '';
@@ -1466,6 +1562,8 @@ function showAddMenuModal() {
     document.getElementById('add-menu-modal').showModal();
 }
 
+// รับค่าจากฟอร์มเพิ่มเมนู แล้วส่งไปสร้าง record ใหม่ใน database
+// ฟิลด์ name_th กับ name แยกไว้เพื่อรองรับไทย/อังกฤษ
 async function addNewMenu() {
     const name_th = document.getElementById('new-menu-name-th').value.trim();
     const name = document.getElementById('new-menu-name-en').value.trim();
@@ -1496,6 +1594,8 @@ async function addNewMenu() {
     }
 }
 
+// เวลาแก้เมนู เราไม่ยิง API เพื่อโหลดรายการเดี่ยวซ้ำ
+// แต่ใช้ข้อมูลจาก allMenus ที่โหลดมารอบล่าสุดแทน เพื่อให้ modal เปิดไวขึ้น
 function showEditMenuModal(menuId) {
     const menu = allMenus.find(item => item.id === menuId);
     if (!menu) return;
@@ -1511,6 +1611,8 @@ function showEditMenuModal(menuId) {
     document.getElementById('edit-menu-modal').showModal();
 }
 
+// saveMenuEdit() คือการ update เมนูเดิม
+// backend จะใช้ id ที่ hidden ไว้เพื่อรู้ว่าต้องแก้ record ไหน
 async function saveMenuEdit() {
     const id = document.getElementById('edit-menu-id').value;
     const name_th = document.getElementById('edit-menu-name-th').value.trim();
@@ -1543,6 +1645,8 @@ async function saveMenuEdit() {
     }
 }
 
+// ฟังก์ชันนี้เปลี่ยนเฉพาะสถานะเปิดขาย/ปิดขาย
+// ใช้เวลาต้องการซ่อนเมนูชั่วคราวโดยไม่ลบทิ้งจากระบบ
 async function toggleMenuStatus(menuId, available) {
     try {
         const res = await fetch(`/menu/${menuId}`, {
@@ -1559,6 +1663,8 @@ async function toggleMenuStatus(menuId, available) {
     }
 }
 
+// deleteMenu เป็นการลบเมนูออกจากระบบแบบถาวร
+// เลยต้องมี confirm ก่อน เพื่อกันกดผิด
 async function deleteMenu(menuId) {
     Swal.fire({
         title: 'ลบเมนู?',
@@ -1607,6 +1713,8 @@ async function loadSales() {
 // REVIEWS
 // ============================================================
 
+// รีวิวต้องกรองได้ทั้งตามวันที่และจำนวนดาว
+// ดังนั้นฟังก์ชันนี้จะโหลดรีวิวทั้งหมดก่อน แล้วค่อย filter ฝั่งหน้าเว็บ
 async function loadReviewsPage() {
     try {
         console.log("⭐ Loading reviews...");
@@ -1698,6 +1806,9 @@ function renderSales(sales) {
 // USERS
 // ============================================================
 
+// หน้า users โหลด 2 ชุดข้อมูลต่อกัน:
+// 1) รายชื่อผู้ใช้จริงในระบบ
+// 2) รายการ Cook ID สำหรับเชิญเชฟสมัคร
 async function loadUsers() {
     try {
         console.log("👥 Loading users...");
@@ -1709,6 +1820,8 @@ async function loadUsers() {
     }
 }
 
+// renderUsers() รับ array users แล้วแปลงเป็นตาราง
+// ถ้าเป็น admin จะไม่แสดงปุ่มลบ เพื่อกันลบผู้ดูแลระบบหลักโดยไม่ตั้งใจ
 function renderUsers(users) {
     const tbody = document.getElementById('users-list');
     tbody.innerHTML = '';
@@ -1733,6 +1846,8 @@ function renderUsers(users) {
     });
 }
 
+// ลบ user ฝั่ง chef ออกจากระบบ
+// หลังลบเสร็จจะโหลดข้อมูลใหม่ เพื่อให้ list สะท้อนฐานข้อมูลล่าสุด
 async function deleteUser(userId) {
     Swal.fire({
         title: 'ลบผู้ใช้งาน?',
@@ -1754,6 +1869,8 @@ async function deleteUser(userId) {
     });
 }
 
+// Cook invite คือรหัสที่ admin สร้างให้ chef ใช้สมัคร
+// ข้อมูลชุดนี้เก็บแยกจาก users เพราะบางรหัสอาจยังไม่ถูกใช้สมัครจริง
 async function loadInvites() {
     try {
         const invites = await fetch('/invite').then(r => r.json());
@@ -1769,6 +1886,8 @@ async function loadInvites() {
     }
 }
 
+// สรุปจำนวน Cook ID ที่ยังใช้ได้ กับที่ถูกใช้/ปิดไปแล้ว
+// ตัวเลข 2 ช่องด้านบนของหน้า users มาจากตรงนี้
 function renderInviteStats(invites) {
     const activeCount = invites.filter(invite => Number(invite.enabled) === 1).length;
     const disabledCount = invites.length - activeCount;
@@ -1777,6 +1896,8 @@ function renderInviteStats(invites) {
     document.getElementById('invite-disabled-count').innerText = disabledCount;
 }
 
+// วาดตาราง Cook ID พร้อมปุ่ม copy/disable ในแต่ละแถว
+// ถ้ารหัสถูกปิดแล้ว เราจะไม่แสดงปุ่ม disable ซ้ำ
 function renderInvites(invites) {
     const tbody = document.getElementById('invite-list');
     tbody.innerHTML = '';
@@ -1813,11 +1934,14 @@ function renderInvites(invites) {
     });
 }
 
+// helper สำหรับสร้างรหัสเชฟแบบสุ่มให้ admin กดใช้เร็ว ๆ
+// รูปแบบเป็น CK-xxxxxx เพื่อให้คนดูแล้วแยกจาก username ทั่วไปได้ง่าย
 function generateCookId() {
     const randomPart = Math.floor(100000 + Math.random() * 900000);
     return `CK-${randomPart}`;
 }
 
+// กดปุ่ม Randomize แล้วใส่ค่าแนะนำลง input อัตโนมัติ
 function fillSuggestedCookId() {
     const input = document.getElementById('new-cook-id');
     input.value = generateCookId();
@@ -1825,6 +1949,8 @@ function fillSuggestedCookId() {
     input.select();
 }
 
+// ส่ง Cook ID ใหม่ไป backend เพื่อบันทึกในตาราง invite
+// เชฟจะนำรหัสนี้ไปใช้ในหน้าสมัครสมาชิกอีกที
 async function createCookInvite() {
     const input = document.getElementById('new-cook-id');
     const cookId = String(input.value || '').trim().toUpperCase();
@@ -1851,6 +1977,7 @@ async function createCookInvite() {
     }
 }
 
+// ช่วย admin คัดลอกรหัสส่งต่อได้เร็วขึ้น เช่น copy ไปแปะในแชตกลุ่ม
 async function copyCookInvite(cookId) {
     try {
         await navigator.clipboard.writeText(cookId);
@@ -1866,6 +1993,8 @@ async function copyCookInvite(cookId) {
     }
 }
 
+// ปิดสิทธิ์ Cook ID เมื่อไม่ต้องการให้ใช้สมัครแล้ว
+// ใช้กับกรณีรหัสหลุด หรือแจกผิดคน
 async function disableCookInvite(cookId) {
     const result = await Swal.fire({
         title: 'ปิด Cook ID นี้?',
@@ -1895,6 +2024,8 @@ async function disableCookInvite(cookId) {
 // HISTORY
 // ============================================================
 
+// หน้า History ใช้ดูคำสั่งซื้อย้อนหลังพร้อมยอดรวม
+// logic หลักคือโหลด order ทั้งหมด -> กรองช่วงวัน -> คำนวณ summary ด้านบน
 async function loadHistory() {
     try {
         console.log("📋 Loading order history...");
@@ -1931,6 +2062,8 @@ function renderHistory(orders) {
     const tbody = document.getElementById('history-list');
     tbody.innerHTML = '';
 
+    // 1 แถว = 1 order
+    // ส่วนรายละเอียด item จริง ๆ จะถูกแสดงตอนกดปุ่ม Details
     orders.forEach(order => {
         const itemCount = order.items?.length || 0;
         const statusLabel = {
@@ -1960,6 +2093,8 @@ function renderHistory(orders) {
     });
 }
 
+// กล่องสรุปด้านบนของหน้า history ไม่ได้นับทุก order เป็นยอดขาย
+// เรานับเฉพาะ order ที่ paid แล้ว เพื่อให้ยอดรวมตรงกับเงินจริง
 function calculateStats(orders) {
     let totalRecords = orders.length;
     let totalSales = 0;
@@ -1980,6 +2115,8 @@ function calculateStats(orders) {
     document.getElementById('history-avg-per-order').innerText = `฿${avgPerOrder.toFixed(2)}`;
 }
 
+// helper กลางสำหรับแปลง payment code จาก database -> ข้อความที่คนอ่านเข้าใจ
+// ทำแยกไว้แบบนี้จะได้ใช้ซ้ำได้ทั้ง history, sales และ order detail
 function formatPaymentMethodLabel(paymentMethod, paid) {
     if (!paid) return '❌ Pending Payment';
 
@@ -1990,6 +2127,8 @@ function formatPaymentMethodLabel(paymentMethod, paid) {
     }[paymentMethod] || '✅ Paid';
 }
 
+// เมื่อกดดูรายละเอียด เราจะโหลด order ทั้งหมดแล้วหาเฉพาะ order ที่ตรง id
+// จากนั้นค่อยประกอบ HTML รายการสินค้า ยอดรวม และสถานะจ่ายเงินใน modal
 async function showOrderDetail(orderId) {
     try {
         const orders = await fetch('/orders').then(r => r.json());
@@ -2070,6 +2209,8 @@ async function showOrderDetail(orderId) {
     }
 }
 
+// exportHistory แปลงข้อมูล order เป็น CSV เพื่อให้ admin เปิดใน Excel ได้
+// เหมาะกับส่งอาจารย์หรือใช้ทำสรุปรายงานนอกระบบ
 async function exportHistory() {
     try {
         const dateStart = document.getElementById('filter-date-start').value;
@@ -2134,6 +2275,8 @@ function logout() {
 // INIT
 // ============================================================
 
+// จุดเริ่มต้นของหน้า admin:
+// ตั้งค่าภาษา, ตั้งค่าวันเริ่มต้น, แล้วโหลด dashboard เป็นหน้าแรก
 window.addEventListener('DOMContentLoaded', async () => {
     console.log("📊 Admin dashboard loading...");
     setLang(currentLang);

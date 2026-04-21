@@ -310,6 +310,8 @@ let currentPage = 'kds';
 let refreshInterval = null;
 let currentLanguage = localStorage.getItem('hf_chef_lang') || 'th';
 
+// object นี้เก็บข้อความทั้งหมดของหน้า chef panel
+// วิธีนี้ทำให้เราใช้ data-i18n กับ helper t() เพื่อสลับภาษาได้ทั้งหน้า
 const translations = {
     th: {
         chefPanel: 'Chef Panel',
@@ -483,6 +485,8 @@ function t(key, vars = {}) {
     return text;
 }
 
+// helper พวกนี้ใช้รวมการ format วันเวลา/สถานะ
+// จะได้ไม่ต้องเขียน logic ซ้ำหลายจุดเวลาต้อง render order card หรือ history table
 function getLocale() {
     return currentLanguage === 'en' ? 'en-US' : 'th-TH';
 }
@@ -509,6 +513,7 @@ function statusLabel(status) {
     }[status] || status;
 }
 
+// อัปเดตข้อความที่ถูกผูกด้วย data-i18n และ option ใน select filter
 function updateStaticTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         el.textContent = t(el.dataset.i18n);
@@ -524,6 +529,7 @@ function updateStaticTranslations() {
     }
 }
 
+// ทำให้ปุ่ม TH / EN แสดงสถานะชัดว่าตอนนี้ใช้ภาษาไหนอยู่
 function updateLanguageButtons() {
     const thBtn = document.getElementById('lang-th');
     const enBtn = document.getElementById('lang-en');
@@ -534,6 +540,8 @@ function updateLanguageButtons() {
     enBtn.className = `btn btn-sm join-item border-0 ${!isThai ? 'bg-hf-green text-white' : 'bg-white text-gray-500'}`;
 }
 
+// หัวข้อด้านบนของหน้า chef จะเปลี่ยนตาม page ที่กำลังเปิด
+// เช่น Dashboard, KDS, History, Reviews
 function updatePageHeader() {
     const titles = {
         dashboard: { title: t('pageDashboardTitle'), subtitle: t('pageDashboardSubtitle') },
@@ -547,6 +555,8 @@ function updatePageHeader() {
 }
 
 function setLanguage(lang) {
+    // หลังเปลี่ยนภาษา เราต้อง render ใหม่บาง page
+    // เพราะข้อมูลที่ดึงมาจาก backend เดิมยังต้องถูก format ใหม่ตาม locale ปัจจุบัน
     currentLanguage = lang === 'en' ? 'en' : 'th';
     localStorage.setItem('hf_chef_lang', currentLanguage);
     document.documentElement.lang = currentLanguage;
@@ -565,6 +575,8 @@ function setLanguage(lang) {
 // PAGE MANAGEMENT
 // ============================================================
 
+// ควบคุมการสลับ page ภายใน chef panel แบบ single-page
+// หน้าไม่ได้เปลี่ยนไฟล์ HTML แต่ใช้ show/hide section แทน
 function showPage(page) {
     document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`page-${page}`).classList.remove('hidden');
@@ -585,6 +597,8 @@ function showPage(page) {
 // KDS - LOAD & RENDER ORDERS
 // ============================================================
 
+// ดึง active orders สำหรับหน้า KDS
+// หน้านี้ใช้ endpoint /orders/active เพราะ chef สนใจเฉพาะคิวที่ยังต้องทำงานอยู่
 async function loadOrders() {
     try {
         console.log("📋 Fetching orders from /orders/active...");
@@ -610,6 +624,8 @@ async function loadOrders() {
     }
 }
 
+// Dashboard ของ chef ไม่ได้แค่แสดง active orders
+// แต่ดึง orders ทั้งหมดของวันนี้มาคำนวณสถิติ เช่น average wait และ top menu
 async function renderDashboard() {
     try {
         const orders = await fetch('/orders').then(r => r.json());
@@ -627,6 +643,8 @@ async function renderDashboard() {
               }, 0) / openOrders.length)
             : 0;
 
+        // รวมยอดจำนวนที่แต่ละเมนูถูกสั่งในวันนี้
+        // เพื่อใช้หา "เมนูยอดนิยม"
         const itemMap = {};
         todayOrders.forEach(order => {
             (order.items || []).forEach(item => {
@@ -667,6 +685,7 @@ async function renderDashboard() {
             `).join('');
         }
 
+        // recent queue คือรายการล่าสุดไม่กี่ออเดอร์เพื่อให้ chef เห็นภาพรวมเร็ว ๆ
         const recentEl = document.getElementById('dashboard-recent-orders');
         const recentOrders = todayOrders
             .slice()
@@ -696,6 +715,7 @@ async function renderDashboard() {
     }
 }
 
+// หน้า reviews ใช้คนละ endpoint/logic กับหน้า KDS จึงแยก refresh helper ไว้
 async function refreshCurrentPage() {
     if (currentPage === 'reviews') {
         await loadReviews();
@@ -711,6 +731,8 @@ function showDashboardOrder(orderId) {
     showOrderDetail(order);
 }
 
+// renderOrders คือหัวใจของหน้า KDS
+// มันแบ่ง allOrders ออกเป็น 3 กลุ่มหลัก แล้วส่งต่อให้ renderOrderGroup ทีละคอลัมน์
 function renderOrders() {
     const pending = allOrders.filter(o => o.status === 'pending');
     const cooking = allOrders.filter(o => o.status === 'cooking');
@@ -727,6 +749,8 @@ function renderOrders() {
     }
 }
 
+// ฟังก์ชันนี้สร้าง card ของออเดอร์ในแต่ละคอลัมน์
+// pending / cooking / serving จะได้ปุ่มควบคุมคนละแบบตามสถานะ
 function renderOrderGroup(containerId, orders, status) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
@@ -741,6 +765,8 @@ function renderOrderGroup(containerId, orders, status) {
         card.className = `order-card p-4 rounded-xl cursor-pointer shadow-sm border border-gray-200 ${status === 'pending' ? 'pending' : status === 'cooking' ? 'cooking' : ''}`;
         card.onclick = () => showOrderDetail(order);
 
+        // waitTime คำนวณจากเวลาสร้าง order ถึงเวลาปัจจุบัน
+        // ใช้ให้ chef เห็นว่า order ไหนรอนานและควรรีบจัดการก่อน
         const waitTime = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 1000 / 60);
         const timeClass = waitTime > 20 ? 'text-red-600' : waitTime > 10 ? 'text-yellow-600' : 'text-gray-600';
 
@@ -785,6 +811,8 @@ function renderOrderGroup(containerId, orders, status) {
     });
 }
 
+// ทุกปุ่มเปลี่ยนสถานะสุดท้ายจะมาจบที่ฟังก์ชันนี้
+// เพื่อให้มีจุดกลางจุดเดียวสำหรับยิง PATCH ไป backend
 async function setOrderStatus(orderId, status, event) {
     event?.stopPropagation();
 
@@ -808,12 +836,14 @@ async function setOrderStatus(orderId, status, event) {
     }
 }
 
+// update ตัวเลข summary ด้านบนของหน้า KDS
 function updateStats() {
     document.getElementById('stat-pending').innerText = allOrders.filter(o => o.status === 'pending').length;
     document.getElementById('stat-cooking').innerText = allOrders.filter(o => o.status === 'cooking').length;
     document.getElementById('stat-ready').innerText = allOrders.filter(o => o.status === 'serving').length;
 }
 
+// helper ชื่ออ่านง่ายสำหรับปุ่มใน UI
 async function startCooking(orderId, event) {
     await setOrderStatus(orderId, 'cooking', event);
 }
@@ -822,6 +852,8 @@ async function readyServing(orderId, event) {
     await setOrderStatus(orderId, 'serving', event);
 }
 
+// chef ยกเลิกออเดอร์จากหน้า KDS ได้
+// เมื่อกดยืนยันแล้ว backend จะเปลี่ยนสถานะ order เป็น cancelled
 async function cancelOrder(orderId, event) {
     event.stopPropagation();
     
@@ -856,6 +888,8 @@ async function cancelOrder(orderId, event) {
     });
 }
 
+// modal รายละเอียดใช้ดูรายการอาหารของ order แบบเต็ม
+// ใช้ทั้งจากหน้า KDS และหน้า History
 function showOrderDetail(order) {
     const itemsHtml = (order.items || []).map(item => `
         <div class="bg-hf-bg p-3 rounded-lg">
@@ -898,6 +932,8 @@ function showOrderDetail(order) {
 // HISTORY
 // ============================================================
 
+// History ของ chef แสดง order ที่เลยขั้น pending มาแล้ว
+// จึงตัด pending ออกเพื่อให้เหลือรายการที่เริ่มทำงานจริง
 async function loadHistory() {
     try {
         console.log("📋 Loading order history...");
@@ -927,6 +963,7 @@ async function loadHistory() {
     }
 }
 
+// render ตารางประวัติการทำอาหารตามช่วงวันที่ที่กรองไว้
 function renderHistory(orders) {
     const tbody = document.getElementById('history-list');
     tbody.innerHTML = '';
@@ -957,6 +994,7 @@ function renderHistory(orders) {
     });
 }
 
+// คำนวณตัวเลขสรุปด้านบนของหน้า History
 function calculateStats(orders) {
     let totalRecords = orders.length;
     let completed = orders.filter(o => o.status !== 'cancelled').length;
@@ -971,10 +1009,13 @@ function calculateStats(orders) {
 // REVIEWS
 // ============================================================
 
+// ใช้ helper นี้ทั้งในหน้ารวมรีวิวและจุดแสดงคะแนนอื่น ๆ
 function renderStars(rating) {
     return Array.from({ length: 5 }, (_, i) => i < rating ? '★' : '☆').join('');
 }
 
+// รีวิวของ chef เป็นมุมมองให้ครัวเห็น feedback หลังบ้าน
+// ฟังก์ชันนี้โหลดรีวิวทั้งหมดแล้วค่อย filter ตามดาวที่ผู้ใช้เลือก
 async function loadReviews() {
     try {
         const response = await fetch('/reviews');
@@ -994,6 +1035,8 @@ async function loadReviews() {
     }
 }
 
+// summary card ด้านบนของหน้า reviews
+// เอาไว้ให้ครัวเห็นภาพรวมคะแนนเฉลี่ยและสัดส่วนรีวิวดี/รีวิวที่ต้องติดตาม
 function renderReviewsSummary(reviews) {
     const total = reviews.length;
     const average = total
@@ -1008,6 +1051,8 @@ function renderReviewsSummary(reviews) {
     document.getElementById('review-negative').innerText = negative;
 }
 
+// render รายการรีวิวจริงด้านล่าง
+// สีของ card เปลี่ยนตาม tone ของคะแนนเพื่อให้สแกนสายตาได้เร็วขึ้น
 function renderReviewsList(reviews) {
     const container = document.getElementById('reviews-list');
 
@@ -1048,11 +1093,14 @@ function renderReviewsList(reviews) {
 // UTILITIES
 // ============================================================
 
+// แสดงนาฬิกามุมขวาบนของหน้า chef
 function updateTime() {
     const now = new Date();
     document.getElementById('time').innerText = now.toLocaleTimeString(getLocale());
 }
 
+// logout ฝั่ง frontend:
+// ล้าง session ใน browser แล้วพากลับไปหน้า login
 function logout() {
     if (typeof DB !== 'undefined' && DB.clearSession) {
         DB.clearSession();
@@ -1067,10 +1115,12 @@ function logout() {
 // INIT
 // ============================================================
 
+// จุดเริ่มต้นของหน้า kitchen:
+// รอ DB helper -> ตั้งค่าภาษา -> โหลด orders รอบแรก -> ตั้ง auto refresh
 window.addEventListener('DOMContentLoaded', async () => {
     console.log("🍳 Kitchen Display System loading...");
     
-    // ✅ รอให้ DB โหลด
+    // รอ db-client.js โหลดเสร็จก่อน เพราะ logout และบาง flow ใช้ DB helper
     let attempts = 0;
     while (typeof DB === 'undefined' && attempts < 100) {
         await new Promise(r => setTimeout(r, 50));
@@ -1092,9 +1142,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     setInterval(updateTime, 1000);
 
     await loadOrders();
+    // หน้า chef ควรอัปเดตตลอด เพราะสถานะ order เปลี่ยนได้จากหลายเครื่อง
     refreshInterval = setInterval(refreshCurrentPage, 5000);
 });
 
+// ป้องกัน interval ค้างเมื่อผู้ใช้ปิดแท็บหรือออกจากหน้า
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) clearInterval(refreshInterval);
 });

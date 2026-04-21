@@ -1,14 +1,18 @@
 function parseExtra(top) {
+  // อ่านราคาเพิ่มจากข้อความรูปแบบ "ไข่ดาว (+10)"
   const match = String(top).match(/\(\s*\+\s*([\d.]+)\s*\)/);
   return match ? parseFloat(match[1]) : 0;
 }
 
 function stripTop(top) {
+  // เอาเฉพาะชื่อ topping ไม่เอาส่วนราคาเพิ่ม
   return String(top).replace(/\s*\(\s*\+\s*[\d.]+\s*\)/, "").trim();
 }
 
 function registerAliasRoutes(app, deps) {
   const { pool, crypto, MENU_SELECT, MENU_GROUP, formatMenuItem, parseToppings, fetchOrdersWithItems } = deps;
+  // ไฟล์นี้เป็น route รวมหลายฟังก์ชันที่หน้าเว็บเรียกใช้บ่อย
+  // เช่น menu, tables, orders, sales, reviews และ endpoint alias ต่างๆ
 
   /**
    * @swagger
@@ -46,6 +50,7 @@ function registerAliasRoutes(app, deps) {
         "SELECT table_id AS id, status, current_order_id AS order_id, capacity, updated_at FROM restaurant_tables ORDER BY table_id"
       );
       const tables = {};
+      // แปลง array จากฐานข้อมูลให้เป็น object ที่ access ด้วย table id ได้ทันที
       results.forEach((t) => {
         tables[t.id] = { status: t.status || "vacant", order_id: t.order_id || null, capacity: t.capacity || 4, updated_at: t.updated_at };
       });
@@ -139,6 +144,8 @@ function registerAliasRoutes(app, deps) {
     const { name, name_th, category, price, toppings, img, image_url } = req.body;
     const conn = await pool.getConnection();
     try {
+      // ใช้ transaction เพราะการสร้างเมนู 1 ครั้งต้องเขียนหลายตาราง:
+      // menu_items และ menu_toppings
       await conn.beginTransaction();
       const [catRow] = await conn.query("SELECT id FROM menu_categories WHERE code = ?", [category]);
       if (!catRow.length) {
@@ -202,6 +209,8 @@ function registerAliasRoutes(app, deps) {
       await conn.beginTransaction();
       const fields = [];
       const vals = [];
+      // สร้าง SQL update แบบ dynamic
+      // เพื่ออัปเดตเฉพาะ field ที่ frontend ส่งเข้ามาจริง
       const thName = name_th || nameTh;
       if (thName) { fields.push("name_th = ?"); vals.push(thName); }
       if (name) { fields.push("name_en = ?"); vals.push(name); }
@@ -221,6 +230,7 @@ function registerAliasRoutes(app, deps) {
       }
 
       if (Array.isArray(toppings)) {
+        // วิธีง่ายสุดในการ sync topping คือ ลบของเดิมแล้ว insert ใหม่ตาม list ล่าสุด
         await conn.query("DELETE FROM menu_toppings WHERE menu_id = ?", [id]);
         for (let i = 0; i < toppings.length; i++) {
           await conn.query(
@@ -286,6 +296,11 @@ function registerAliasRoutes(app, deps) {
 
     const conn = await pool.getConnection();
     try {
+      // 1 order ประกอบด้วย:
+      // - ข้อมูลออเดอร์หลักใน orders
+      // - หลายรายการใน order_items
+      // - หลาย topping ใน order_item_toppings
+      // เลยต้องใช้ transaction กันข้อมูลครึ่งๆ กลางๆ
       await conn.beginTransaction();
       const subtotal = parseFloat(total);
       const vatRate = 0.07;
@@ -305,6 +320,7 @@ function registerAliasRoutes(app, deps) {
           "INSERT INTO order_items (order_id, menu_id, menu_name_th, unit_price, qty, extra_price, line_total, special_note) VALUES (?,?,?,?,?,?,?,?)",
           [orderId, item.menuId, item.name, item.price, item.qty, extraPrice, lineTotal, item.note || null]
         );
+        // topping ถูกแยกเก็บอีกตาราง เพื่อให้ย้อนดูใบเสร็จหรือ order detail ได้ภายหลัง
         for (const top of itemToppings) {
           await conn.query(
             "INSERT INTO order_item_toppings (order_item_id, topping_name, extra_price) VALUES (?,?,?)",

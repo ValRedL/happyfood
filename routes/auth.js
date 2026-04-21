@@ -1,4 +1,6 @@
 function registerAuthRoutes(app, { pool, argon2 }) {
+  // ไฟล์นี้ดูแลเรื่อง identity ของผู้ใช้เป็นหลัก:
+  // login, register chef, และการจัดการ cook invite code
   /**
    * @swagger
    * /login:
@@ -26,6 +28,7 @@ function registerAuthRoutes(app, { pool, argon2 }) {
   app.post("/login", async (req, res) => {
     const { username, password } = req.body;
     try {
+      // query username ก่อน แล้วค่อยตรวจ password hash ด้วย argon2
       const [results] = await pool.query(
         "SELECT id, password, full_name AS name, role FROM users WHERE username = ? AND is_active = TRUE",
         [username]
@@ -81,6 +84,7 @@ function registerAuthRoutes(app, { pool, argon2 }) {
 
     try {
       if (cook_id) {
+        // ถ้ามี cook_id แปลว่า chef คนนี้ต้องสมัครผ่านรหัสที่ admin สร้างไว้
         const [inviteRows] = await pool.query(
           "SELECT id FROM cook_ids WHERE id = ? AND enabled = 1",
           [cook_id]
@@ -96,12 +100,14 @@ function registerAuthRoutes(app, { pool, argon2 }) {
       const hashed = argon2.hashSync(password);
       const chefId = `CHF-${Date.now()}`;
 
+      // บัญชี chef ถูกสร้างเป็น role = chef เสมอใน flow นี้
       await pool.query(
         "INSERT INTO users (id, username, password, full_name, role, is_active) VALUES (?,?,?,?,'chef',TRUE)",
         [chefId, username, hashed, resolvedName]
       );
 
       if (cook_id) {
+        // ใช้ cook_id แล้ว ให้ปิดรหัสนั้นทันทีเพื่อกันการสมัครซ้ำ
         await pool.query("UPDATE cook_ids SET enabled = 0 WHERE id = ?", [cook_id]);
       }
 
@@ -168,6 +174,8 @@ function registerAuthRoutes(app, { pool, argon2 }) {
     if (!inviteId) return res.status(400).send("Cook ID is required");
 
     try {
+      // ON DUPLICATE KEY ช่วยให้ admin เปิดรหัสเดิมกลับมาใช้ได้
+      // โดยไม่ต้องลบแล้วสร้างใหม่
       await pool.query(
         "INSERT INTO cook_ids (id, enabled) VALUES (?, 1) ON DUPLICATE KEY UPDATE enabled = 1",
         [inviteId]

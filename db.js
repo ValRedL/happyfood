@@ -1,5 +1,7 @@
 const mysql = require('mysql2');
 
+// ใช้ connection pool แทนการเปิด connection ใหม่ทุก request
+// ข้อดีคือเร็วขึ้นและควบคุมจำนวน connection พร้อมกันได้ง่ายกว่า
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'root',
@@ -11,7 +13,8 @@ const pool = mysql.createPool({
   keepAliveInitialDelayMs: 0
 });
 
-// ✅ ตรวจสอบการเชื่อมต่อ Database
+// เช็คการเชื่อมต่อครั้งแรกตอนเปิด server
+// เพื่อให้เห็น error ตั้งแต่เริ่ม run ว่าต่อฐานข้อมูลได้หรือไม่
 pool.getConnection((err, connection) => {
   if (err) {
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
@@ -30,4 +33,5 @@ pool.getConnection((err, connection) => {
   }
 });
 
+// export แบบ promise() เพื่อให้ route ใช้ await pool.query(...) ได้ตรงๆ
 module.exports = pool.promise();
