@@ -54,7 +54,7 @@
                   reviewsLoadFail:'Failed to load reviews', avgScore:'Average Rating', latestReviews:'Latest Reviews',
                   anonymousReview:'Customer left a rating without additional comments', table:'Table' },
         };
-        let lang = localStorage.getItem('customerLang') || 'th', cart = [], tempItem = null, currentCat = 'all', ordered = false, publicReviews = [];
+let lang = localStorage.getItem('customerLang') || 'th', cart = [], tempItem = null, currentCat = 'all', ordered = false, publicReviews = [];
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&display=swap');
@@ -279,6 +279,8 @@
 <script>
 let allMenuItems = [];
 
+// ชื่อเมนูในระบบมีทั้งไทยและอังกฤษ
+// helper นี้เลือกชื่อที่เหมาะกับภาษาปัจจุบันของหน้าเว็บ
 function getMenuName(item) {
     return lang === 'en'
         ? (item.name_en || item.name || item.name_th || '-')
@@ -333,6 +335,8 @@ function updateCategoryOptions() {
     });
 }
 
+// อัปเดตข้อความคงที่ของหน้า menu
+// เช่น title, label, ปุ่ม, placeholder และข้อความใน modal
 function updateStaticTexts() {
     document.title = tl[lang].pageTitle;
     document.documentElement.lang = lang;
@@ -381,6 +385,8 @@ function getMenuVisual(item, sizeClass = 'h-24 w-24') {
 }
 
 async function renderMenu(filter = 'all', q = '') {
+    // โหลด menu ครั้งแรกจาก backend แล้ว cache ไว้ใน allMenuItems
+    // หลังจากนั้นเวลาค้นหาหรือเปลี่ยนหมวดหมู่จะ filter ฝั่งหน้าเว็บแทน
     if (!allMenuItems.length) {
         try {
             console.log("📥 Fetching menu from API...");
@@ -424,6 +430,8 @@ async function renderMenu(filter = 'all', q = '') {
     console.log(`📊 Rendered ${count} menu items (filter: ${filter})`);
 }
 
+// เมื่อกดเมนู 1 รายการ จะเปิด modal เพื่อเลือก topping / จำนวน / หมายเหตุ
+// เราเก็บข้อมูลชั่วคราวไว้ใน tempItem ก่อนค่อย push ลง cart จริง
 function openItemModal(item) {
     if (ordered) return;
     tempItem = { ...item, selectedToppings: [], qty: 1 };
@@ -511,6 +519,8 @@ function removeFromCart(i) {
     updateCartUI();
 }
 
+// render ตะกร้าทั้งหมดใหม่ทุกครั้งหลัง add/remove item
+// หน้า menu ใช้วิธี render ใหม่ทั้ง list เพราะ logic เข้าใจง่ายสำหรับมือใหม่
 function updateCartUI() {
     const container = document.getElementById('cart-items');
     const total = cart.reduce((s,i) => s+i.totalPrice, 0);
@@ -545,6 +555,8 @@ function updateCartUI() {
 }
 
 async function placeOrder() {
+    // ตอนกดสั่งอาหาร จะส่งข้อมูล cart ทั้งก้อนไปสร้าง order ที่ backend
+    // ถ้าสำเร็จ หน้าเว็บจะเก็บ current order ไว้และเริ่ม polling สถานะ
     if (!cart.length) return;
     document.getElementById('cart-drawer').checked = false;
     const total = cart.reduce((s,i) => s+i.totalPrice, 0);
@@ -790,7 +802,8 @@ async function goBack() {
     });
 }
 
-// ✅ Main initialization
+// จุดเริ่มต้นของหน้า menu:
+// รอให้ DB client โหลดเสร็จ -> ตรวจโต๊ะ -> โหลดเมนู -> sync สถานะออเดอร์เดิม
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("🔄 Menu page loading...");
     

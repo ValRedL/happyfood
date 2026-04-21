@@ -112,18 +112,23 @@ let refreshInterval = null;
 let lastTablesSignature = '';
 let publicReviews = [];
 
+// อ่านรายการโต๊ะล่าสุดจาก backend
+// หน้าเลือกโต๊ะต้องเรียกซ้ำเรื่อย ๆ เพราะสถานะโต๊ะอาจถูกเปลี่ยนจากลูกค้าคนอื่นได้
 async function getTables() {
     const response = await fetch('/tables');
     if (!response.ok) throw new Error('Failed to fetch tables');
     return response.json();
 }
 
+// ฟังก์ชันนี้รับ "ข้อมูลโต๊ะ 1 ตัว" แล้วแปลงเป็น HTML ของ card
+// แยกเป็น helper จะทำให้ logic render แต่ละโต๊ะอ่านง่ายกว่าเขียนรวมไว้ใน renderMenu()
 function getTableCardMarkup(id, info) {
     const isOccupied = info.status === 'occupied';
     const isCleaning = info.status === 'cleaning';
     const isDisabled = isOccupied || isCleaning;
     const isSelected = selectedId === id;
 
+    // label และสีของ badge จะเปลี่ยนตามสถานะโต๊ะปัจจุบัน
     const statusLabel = isSelected
         ? t[lang].selected
         : isOccupied ? t[lang].occupied
@@ -167,6 +172,8 @@ function getTableCardMarkup(id, info) {
     };
 }
 
+// update เฉพาะ card ที่มีอยู่จริงในหน้า
+// วิธีนี้ช่วยลดอาการกระพริบ เพราะเราไม่ล้างทั้ง grid ทุกครั้ง
 function upsertTableCards(tables) {
     const grid = document.getElementById('table-grid');
     const entries = Object.entries(tables).sort(([a], [b]) => a.localeCompare(b));
@@ -196,6 +203,8 @@ function upsertTableCards(tables) {
 }
 
 async function renderMenu(force = false) {
+    // ถึงชื่อฟังก์ชันจะชื่อ renderMenu แต่จริง ๆ หน้านี้คือ "render table selection"
+    // โค้ดเดิมใช้ชื่อนี้มาตั้งแต่เวอร์ชันแรก เลยยังคงไว้เพื่อไม่ให้กระทบจุดอื่น
     const grid = document.getElementById('table-grid');
 
     let tables = {};
@@ -212,6 +221,8 @@ async function renderMenu(force = false) {
         tables: Object.entries(tables).sort(([a], [b]) => a.localeCompare(b))
     });
 
+    // ถ้าข้อมูลโต๊ะยังเหมือนเดิมทุกอย่าง เราจะไม่ render ซ้ำ
+    // จุดนี้สำคัญมาก เพราะช่วยลดการกระพริบของหน้าเวลา auto-refresh ทุก 3 วินาที
     if (!force && signature === lastTablesSignature) {
         return;
     }
@@ -233,7 +244,8 @@ async function renderMenu(force = false) {
     upsertTableCards(tables);
 }
 
-// ✅ เลือกโต๊ะ + ตรวจสอบว่างหรือไม่
+// เมื่อผู้ใช้กดเลือกโต๊ะ เราไม่เชื่อข้อมูลที่อยู่บนหน้าทันที
+// แต่จะ fetch สถานะโต๊ะล่าสุดจาก server อีกครั้งก่อน เพื่อกันกรณีมีคนอื่นเลือกโต๊ะนี้ไปก่อนหน้า
 async function selectTable(id, el) {
     try {
         console.log(`🔍 Checking table ${id} status...`);
@@ -242,14 +254,14 @@ async function selectTable(id, el) {
 
         console.log(`Table ${id} status:`, tableStatus);
 
-        // ✅ ถ้าโต๊ะถูกใช้แล้ว �� ห้ามคลิก
+        // ถ้าโต๊ะมีคนใช้อยู่แล้ว ให้หยุด flow ทันที
         if (tableStatus && tableStatus.status === 'occupied') {
             console.warn(`⚠️ Table ${id} is occupied! Cannot select.`);
             showOccupiedAlert(id);
             return;
         }
 
-        // ✅ ถ้าอยู่ในสถานะ cleaning → ห้ามคลิก
+        // ถ้าโต๊ะกำลัง cleaning ก็ยังไม่ให้ลูกค้าใหม่เข้าใช้
         if (tableStatus && tableStatus.status === 'cleaning') {
             console.warn(`⚠️ Table ${id} is cleaning!`);
             Swal.fire({
@@ -262,7 +274,7 @@ async function selectTable(id, el) {
             return;
         }
 
-        // ✅ ถ้าว่าง → เลือกได้ตามปกติ
+        // ถ้าโต๊ะว่างจริง ค่อยบันทึก selectedId แล้ว render หน้าใหม่เพื่อให้ card เปลี่ยนสี
         console.log(`✅ Table ${id} is available`);
         selectedId = id;
         await renderMenu(true);
@@ -273,7 +285,7 @@ async function selectTable(id, el) {
     }
 }
 
-// ✅ แจ้งเตือนเมื่อคลิกโต๊ะที่ occupied
+// popup นี้ใช้ซ้ำเวลาผู้ใช้กดโต๊ะที่ไม่ว่าง
 function showOccupiedAlert(tableId) {
     Swal.fire({
         title: '⚠️ โต๊ะนี้ถูกใช้อยู่',
@@ -284,11 +296,14 @@ function showOccupiedAlert(tableId) {
     });
 }
 
+// แปลงคะแนนเป็นดาว เช่น 4 -> ★★★★☆
 function renderStars(rating) {
     const score = Number(rating || 0);
     return Array.from({ length: 5 }, (_, i) => i < score ? '★' : '☆').join('');
 }
 
+// render รีวิวสาธารณะที่หน้าเลือกโต๊ะ
+// ลูกค้ายังไม่ต้อง login ก็เปิดดูรีวิวรวมของร้านได้
 function renderPublicReviews(reviews) {
     const list = document.getElementById('reviews-list');
     const avgEl = document.getElementById('reviews-average-value');
@@ -322,6 +337,8 @@ function renderPublicReviews(reviews) {
 }
 
 async function openReviewsModal() {
+    // เปิด modal ก่อน แล้วค่อยโหลดข้อมูล
+    // ผู้ใช้จะเห็นทันทีว่าระบบกำลังทำงาน ไม่รู้สึกว่าปุ่มกดแล้วเงียบ
     document.getElementById('reviews-title').innerText = t[lang].reviewsTitle;
     document.getElementById('reviews-average-label').innerText = t[lang].avgScore;
     document.getElementById('reviews-list').innerHTML = `<p class="text-gray-400 text-sm">${t[lang].latestReviews}...</p>`;
@@ -335,14 +352,19 @@ async function openReviewsModal() {
     }
 }
 
-// ✅ LOCK TABLE ทันที + สร้าง SESSION + ไปเมนู
+// ขั้นตอนก่อนเข้าหน้าเมนู:
+// 1) lock โต๊ะให้เป็น occupied
+// 2) สร้าง customer session
+// 3) จำโต๊ะไว้ใน localStorage
+// 4) redirect ไปหน้าเมนู
+// ถ้าไม่ทำขั้นตอนนี้ก่อน ลูกค้า 2 คนอาจเข้ามาใช้โต๊ะเดียวกันพร้อมกันได้
 async function goToMenu() {
     if (!selectedId) return;
 
     try {
         console.log(`📍 Locking table: ${selectedId}`);
         
-        // ✅ 1. ล็อกโต๊ะ ก่อน ไปหน้าเมนู
+        // ล็อกโต๊ะทันที เพื่อกันคนอื่นเลือกโต๊ะเดียวกันชนกัน
         const lockRes = await fetch(`/tables/${selectedId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -352,7 +374,7 @@ async function goToMenu() {
         if (!lockRes.ok) throw new Error('Failed to lock table');
         console.log(`✅ Table ${selectedId} locked as occupied`);
 
-        // 2. เปิด Session ใหม่
+        // สร้าง session ของลูกค้าชุดนี้ไว้ใช้เชื่อม order / payment / history
         const sessionRes = await fetch('/start-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -364,10 +386,10 @@ async function goToMenu() {
             console.log(`✅ Session created: ${sessionId}`);
         }
 
-        // 3. จำเบอร์โต๊ะ
+        // จำโต๊ะที่เลือกไว้ใน browser เพื่อให้หน้าถัดไปรู้ว่า user อยู่โต๊ะไหน
         DB.set(DB.KEYS.SELECTED_TABLE, selectedId);
 
-        // 4. ไปหน้าเมนู
+        // เมื่อทุกอย่างพร้อมแล้วค่อยไปหน้าเมนู
         window.location.href = '/menu-page';
     } catch (error) {
         console.error("❌ Error:", error);
@@ -380,10 +402,13 @@ async function goToMenu() {
     }
 }
 
+// initPage เป็นฟังก์ชัน setup หลักของหน้า table
+// ทำหน้าที่เคลียร์สถานะค้างเก่า, ตรวจ session เดิม, แล้วเริ่ม auto-refresh
 async function initPage() {
     console.log("🔄 Initializing table selection page...");
     
-    // ✅ รอให้ DB โหลด
+    // รอให้ frontend helper (DB client) โหลดเสร็จก่อน
+    // เพราะหน้านี้ต้องใช้ localStorage ผ่าน DB helper
     let attempts = 0;
     while (typeof DB === 'undefined' && attempts < 100) {
         await new Promise(r => setTimeout(r, 50));
@@ -400,14 +425,16 @@ async function initPage() {
 
     console.log(`📝 Previous Table: ${prevTable}, Session: ${prevSession}`);
 
-    // ✅ FIXED: ถ้ามี session ใช้งานอยู่ → ให้ไปเมนูต่อ (ไม่ release โต๊ะ)
+    // ถ้ายังมี session เดิมอยู่ แปลว่าลูกค้ากำลังใช้งานโต๊ะนี้ต่อเนื่อง
+    // จึงพากลับไปหน้าเมนูเลย ไม่ต้องรีเซ็ตโต๊ะ
     if (prevTable && prevSession) {
         console.log(`✅ Session still active, redirecting to menu...`);
         window.location.href = '/menu-page';
         return;
     }
 
-    // ✅ ถ้า occupied แต่ไม่มี session → release (โต๊ะค้าง)
+    // ถ้ามีโต๊ะค้างแต่ไม่มี session แล้ว แปลว่า state ใน browser ไม่สมบูรณ์
+    // เราจะปล่อยโต๊ะกลับเป็น vacant เพื่อไม่ให้โต๊ะค้าง unusable
     if (prevTable && !prevSession) {
         try {
             console.log(`🔓 No session but table locked, releasing: ${prevTable}`);
@@ -419,7 +446,7 @@ async function initPage() {
         } catch(e) { console.error("Release table error:", e); }
     }
 
-    // ✅ Clear local storage
+    // เคลียร์สถานะใน browser ให้หน้าเริ่มจากศูนย์เสมอ
     DB.set(DB.KEYS.SELECTED_TABLE, null);
     DB.set(DB.KEYS.CURRENT_ORDER, null);
     localStorage.removeItem('activeSessionId');
@@ -428,12 +455,14 @@ async function initPage() {
     console.log("✅ Page initialized, rendering tables...");
     await renderMenu(true);
 
-    // ✅ AUTO-REFRESH ทุก 3 วินาที เพื่อดึงสถานะโต๊ะที่อัปเดต
+    // หน้าเลือกโต๊ะต้อง update เรื่อย ๆ เพราะโต๊ะอาจเปลี่ยนสถานะจากเครื่องอื่น
     refreshInterval = setInterval(async () => {
         await renderMenu();
     }, 3000);
 }
 
+// สลับภาษาแล้ว render หน้าโต๊ะใหม่
+// เพราะข้อความบน card เช่น badge / ปุ่ม ต้องเปลี่ยนตามภาษาเช่นกัน
 function setLang(l) {
     lang = l;
     document.getElementById('txt-title').innerText = t[l].title;
@@ -453,7 +482,7 @@ function setLang(l) {
     renderMenu(true);
 }
 
-// ✅ ยกเลิก refresh เมื่อออกจากหน้า
+// กัน interval ค้างเมื่อผู้ใช้เปลี่ยนหน้า
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) {
         clearInterval(refreshInterval);
@@ -461,6 +490,7 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
+// จุดเริ่มต้นจริงของหน้าเลือกโต๊ะ
 window.addEventListener('DOMContentLoaded', initPage);
 </script>
 </body>

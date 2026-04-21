@@ -189,6 +189,8 @@ let grandTotal = 0;
 let lang = localStorage.getItem('customerLang') || 'th';
 let menuNameMap = {};
 
+// หน้า checkout ต้องแปลชื่อ topping ซ้ำอีกครั้ง
+// เพราะข้อมูลใน currentOrder เก็บชื่อ topping แบบข้อความจากฐานข้อมูล
 function translateToppingLabel(label) {
     const raw = String(label || '').trim();
     if (lang !== 'en') return raw.replace('หวานปกต��', 'หวานปกติ');
@@ -224,6 +226,8 @@ function getItemName(item) {
     return item.name_th || item.name || menuNameMap[item.menuId]?.name_th || item.name_en || menuNameMap[item.menuId]?.name_en || '-';
 }
 
+// อัปเดตข้อความคงที่ของหน้า checkout ตามภาษาปัจจุบัน
+// ส่วนข้อมูล order จริงจะถูก render ใน renderSummary()
 function updateStaticTexts() {
     document.title = tl[lang].pageTitle;
     document.documentElement.lang = lang;
@@ -266,6 +270,8 @@ function setLang(nextLang) {
     if (currentOrder) renderSummary();
 }
 
+// แสดงรายการอาหารทั้งหมดของ order ปัจจุบัน
+// รวมถึง subtotal, VAT และ grand total
 function renderSummary() {
     const tableId = DB.get(DB.KEYS.SELECTED_TABLE);
     document.getElementById('table-badge').innerText = `${tl[lang].table} ${tableId || '--'}`;
@@ -292,6 +298,10 @@ function renderSummary() {
 }
 
 async function init() {
+    // init ของหน้า checkout ทำ 3 เรื่องหลัก:
+    // 1) โหลด current order จาก localStorage
+    // 2) preload menu names สำหรับแสดงชื่ออังกฤษ/ไทย
+    // 3) render ข้อมูลสรุปบิล
     console.log("💳 Initializing checkout...");
     
     if (typeof DB === 'undefined') {
@@ -338,6 +348,8 @@ function selectPay(method, el) {
     el.querySelector('input').checked = true;
 }
 
+// เลือกวิธีจ่ายเงินแล้วแตก flow ต่อไปตาม method
+// promptpay = เปิด QR, cash = แจ้งเรียกพนักงาน, card = mock loading
 function processPayment() {
     if (selectedMethod === 'promptpay') {
         document.getElementById('qr-modal').showModal();
@@ -373,6 +385,8 @@ async function confirmPaymentDone() {
     }, 1500);
 }
 
+// หลังจ่ายเงิน ผู้ใช้เลือกได้ว่าจะส่งรีวิวหรือข้าม
+// จากนั้นระบบจะคืนโต๊ะให้ว่าง ปิด session และพากลับหน้าเลือกโต๊ะ
 async function submitReview(withReview) {
     console.log("📝 Submitting review...");
     
@@ -451,6 +465,7 @@ async function submitReview(withReview) {
     });
 }
 
+// จุดเริ่มต้นของหน้า checkout
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("💳 Checkout page loading...");
     

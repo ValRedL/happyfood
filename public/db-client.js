@@ -3,6 +3,8 @@
  */
 
 async function _api(path, options = {}) {
+  // helper กลางสำหรับเรียก API ทุก endpoint
+  // ถ้า response ไม่ ok จะ throw error กลับไปให้หน้าเว็บจัดการต่อ
   const res = await fetch(path, {
     headers: { "Content-Type": "application/json" },
     ...options,
@@ -24,6 +26,7 @@ const DB = {
   },
 
   get(key) { 
+    // localStorage เก็บข้อมูลข้ามการ refresh หน้าได้
     try { 
       const val = localStorage.getItem(key);
       console.log(`📖 GET [${key}]:`, val ? '✅' : '❌');
@@ -39,6 +42,7 @@ const DB = {
   },
 
   getSession() { 
+    // sessionStorage เหมาะกับข้อมูล login ชั่วคราวของแท็บปัจจุบัน
     try { 
       return JSON.parse(sessionStorage.getItem(this.KEYS.SESSION)); 
     } catch { 
@@ -58,6 +62,7 @@ const DB = {
   },
 
   requireLogin(role = null) {
+    // ใช้ guard หน้า admin / chef เพื่อกันผู้ใช้ที่ยังไม่ login
     const s = this.getSession();
     if (!s) { window.location.href = "/login"; return false; }
     if (role && s.role !== role && s.role !== "admin") {
@@ -122,6 +127,8 @@ const DB = {
 
   async addMenuItem(item) {
     const payload = { ...item };
+    // ฝั่ง UI บางหน้าส่ง nameTh มา แต่ backend ใช้ name_th
+    // เลย normalize ชื่อ field ก่อนยิง request
     if (payload.nameTh !== undefined) {
       payload.name_th = payload.nameTh;
       delete payload.nameTh;
@@ -171,6 +178,8 @@ const DB = {
       method: "POST",
       body: JSON.stringify({ tableId, items, total }),
     });
+    // เก็บ order ล่าสุดไว้ใน localStorage
+    // เพื่อให้หน้า menu / checkout / history ใช้ต่อกันได้
     this.set(this.KEYS.CURRENT_ORDER, order);
     return order;
   },
